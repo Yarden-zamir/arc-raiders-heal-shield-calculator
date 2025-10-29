@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { WEAPONS } from './weaponsData'
 
 // Default configuration
@@ -93,12 +93,72 @@ function BarChart({ data, maxValue }) {
   )
 }
 
+// Custom Image-Enabled Select Component
+function ImageSelect({ value, onChange, options, placeholder = "Select..." }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  const selectedOption = options.find(opt => opt.value === value)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="custom-image-select" ref={dropdownRef}>
+      <div 
+        className="custom-image-select-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {selectedOption ? (
+          <div className="custom-select-selected">
+            {selectedOption.image && (
+              <img src={selectedOption.image} alt={selectedOption.label} onError={(e) => { e.target.style.display = 'none' }} />
+            )}
+            <span>{selectedOption.label}</span>
+          </div>
+        ) : (
+          <span className="custom-select-placeholder">{placeholder}</span>
+        )}
+        <span className="custom-select-arrow">{isOpen ? '▲' : '▼'}</span>
+      </div>
+      {isOpen && (
+        <div className="custom-image-select-dropdown">
+          {options.map(option => (
+            <div
+              key={option.value}
+              className={`custom-select-option ${option.value === value ? 'selected' : ''}`}
+              onClick={() => {
+                onChange({ target: { value: option.value } })
+                setIsOpen(false)
+              }}
+            >
+              {option.image && (
+                <img src={option.image} alt={option.label} onError={(e) => { e.target.style.display = 'none' }} />
+              )}
+              <span>{option.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Component for line graph showing health over events
 function HealthOverEventsGraph({ paths, showSeparate }) {
   const [hoveredPath, setHoveredPath] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 })
-  const containerRef = useState(null)[0]
+  const containerRef = useRef(null)
 
   // Update dimensions on mount and resize
   useEffect(() => {
@@ -1168,14 +1228,19 @@ function App() {
         <div className="section">
           <div className="input-group">
             <label htmlFor="shieldType">Equipped Shield Type:</label>
-            <select id="shieldType" value={selectedShieldType} onChange={handleShieldTypeChange}>
-              <option value="">No Shield</option>
-              {SHIELD_TYPES.map(shield => (
-                <option key={shield.id} value={shield.id}>
-                  {shield.name} ({shield.shieldCharge} charge, {shield.damageMitigation}% mitigation)
-                </option>
-              ))}
-            </select>
+            <ImageSelect
+              value={selectedShieldType}
+              onChange={handleShieldTypeChange}
+              placeholder="No Shield"
+              options={[
+                { value: '', label: 'No Shield', image: null },
+                ...SHIELD_TYPES.map(shield => ({
+                  value: shield.id,
+                  label: `${shield.name} (${shield.shieldCharge} charge, ${shield.damageMitigation}% mitigation)`,
+                  image: shield.image
+                }))
+              ]}
+            />
             {getCurrentShieldType() && (
               <p style={{ color: '#a0a0a0', fontSize: '14px', marginTop: '5px' }}>
                 {getCurrentShieldType().description}
@@ -1337,17 +1402,16 @@ function App() {
 
                                 {branchEvent.type === 'shot' && (
                                   <div className="event-row">
-                                    <select
+                                    <ImageSelect
                                       value={branchEvent.weaponId || getLastUsedWeapon()}
                                       onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { weaponId: e.target.value })}
-                                      style={{ width: '100%' }}
-                                    >
-                                      {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
-                                        <option key={weapon.id} value={weapon.id}>
-                                          {weapon.name} ({weapon.damage} dmg)
-                                        </option>
-                                      ))}
-                                    </select>
+                                      placeholder="Select weapon..."
+                                      options={WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => ({
+                                        value: weapon.id,
+                                        label: `${weapon.name} (${weapon.damage} dmg)`,
+                                        image: weapon.image
+                                      }))}
+                                    />
                                   </div>
                                 )}
 
@@ -1481,17 +1545,16 @@ function App() {
                     {/* Item/Weapon Selection */}
                     {event.type === 'shot' && (
                       <div className="event-row">
-                        <select
+                        <ImageSelect
                           value={event.weaponId || getLastUsedWeapon()}
                           onChange={(e) => updateEvent(event.id, { weaponId: e.target.value })}
-                          style={{ width: '100%' }}
-                        >
-                          {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
-                            <option key={weapon.id} value={weapon.id}>
-                              {weapon.name} ({weapon.damage} dmg)
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Select weapon..."
+                          options={WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => ({
+                            value: weapon.id,
+                            label: `${weapon.name} (${weapon.damage} dmg)`,
+                            image: weapon.image
+                          }))}
+                        />
                       </div>
                     )}
                     {event.type === 'heal' && (

@@ -11,7 +11,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Light Ammo',
     range: 42.8,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Kettle.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Kettle-Level1.png'
   },
   {
     id: 'rattler',
@@ -21,7 +21,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Medium Ammo',
     range: 56.2,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Rattler.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Rattler-Level1.png'
   },
   {
     id: 'arpeggio',
@@ -31,7 +31,7 @@ export const WEAPONS = [
     fireMode: 'Burst',
     ammoType: 'Medium Ammo',
     range: 55.9,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Arpeggio.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Arpeggio-Level1.png'
   },
   {
     id: 'tempest',
@@ -41,7 +41,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Medium Ammo',
     range: 55.9,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Tempest.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Tempest-Level1.png'
   },
   {
     id: 'bettina',
@@ -51,7 +51,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Heavy Ammo',
     range: 51.3,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bettina.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bettina-Level1.png'
   },
 
   // Battle Rifles
@@ -63,7 +63,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Heavy Ammo',
     range: 53.1,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Ferro.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Ferro-Level1.png'
   },
   {
     id: 'renegade',
@@ -73,7 +73,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Medium Ammo',
     range: 68.8,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Renegade.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Renegade-Level1.png'
   },
 
   // Submachine Guns
@@ -85,7 +85,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Light Ammo',
     range: 42.1,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Stitcher.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Stitcher-Level1.png'
   },
   {
     id: 'bobcat',
@@ -95,7 +95,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Light Ammo',
     range: 44,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bobcat.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bobcat-Level1.png'
   },
 
   // Shotguns
@@ -107,7 +107,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Shotgun Ammo',
     range: 20,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Il_Toro.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Il_Toro-Level1.png'
   },
   {
     id: 'vulcano',
@@ -117,7 +117,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Shotgun Ammo',
     range: 26,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Vulcano.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Vulcano-Level1.png'
   },
 
   // Pistols
@@ -129,7 +129,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Light Ammo',
     range: 38.6,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Hairpin.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Hairpin-Level1.png'
   },
   {
     id: 'burletta',
@@ -139,7 +139,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Light Ammo',
     range: 41.7,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Burletta.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Burletta-Level1.png'
   },
   {
     id: 'anvil',
@@ -149,7 +149,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Heavy Ammo',
     range: 50.2,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Anvil.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Anvil-Level1.png'
   },
   {
     id: 'venator',
@@ -159,7 +159,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Medium Ammo',
     range: 48.4,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Venator.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Venator-Level1.png'
   },
 
   // Light Machine Guns
@@ -171,7 +171,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Medium Ammo',
     range: 49.9,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Torrente.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Torrente-Level1.png'
   },
 
   // Sniper Rifles
@@ -183,7 +183,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Medium Ammo',
     range: 80.3,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Osprey.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Osprey-Level1.png'
   },
   {
     id: 'jupiter',
@@ -193,7 +193,7 @@ export const WEAPONS = [
     fireMode: 'Single',
     ammoType: 'Energy Clip',
     range: 71.7,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Jupiter.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Jupiter-Level1.png'
   },
 
   // Special
@@ -205,7 +205,7 @@ export const WEAPONS = [
     fireMode: 'Auto',
     ammoType: 'Energy Clip',
     range: 68.6,
-    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Equalizer.png'
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Equalizer-Level1.png'
   }
 ]
 
