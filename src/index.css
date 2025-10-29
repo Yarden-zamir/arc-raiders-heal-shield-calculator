@@ -31,7 +31,7 @@ body {
   background: linear-gradient(135deg, var(--color-bg-dark) 0%, var(--color-bg-secondary) 100%);
   color: var(--color-text);
   min-height: 100vh;
-  padding: 0.5rem;
+  padding: 0rem;
   font-size: 16px;
   line-height: 1.4;
 }
@@ -75,7 +75,7 @@ h2 {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
-  padding: 0.75rem;
+  padding: 0.25rem;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
@@ -149,7 +149,7 @@ button {
   background: linear-gradient(135deg, var(--color-primary) 0%, #0099cc 100%);
   color: #fff;
   border: none;
-  padding: 0.5rem 0.75rem;
+  padding: 0.25rem 0.75rem;
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-weight: 600;

@@ -1422,7 +1422,6 @@ function App() {
                         <option value="shot">Shot</option>
                         <option value="heal">Heal</option>
                         <option value="shield">Shield</option>
-                        <option value="nothing">Nothing</option>
                       </select>
                     </div>
 
@@ -1525,9 +1524,6 @@ function App() {
               </button>
               <button onClick={() => addEvent('shield')}>
                 + Shield
-              </button>
-              <button onClick={() => addEvent('nothing')}>
-                + Nothing
               </button>
             </div>
           </div>
