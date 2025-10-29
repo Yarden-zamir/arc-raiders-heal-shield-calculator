@@ -1,38 +1,14 @@
 # Arc Raiders Damage Calculator
 
-A React-based calculator to determine how many shots it takes to kill you in Arc Raiders, with accurate shield mitigation mechanics, healing items, and weapon upgrade levels.
+Event-based timeline simulator for Arc Raiders combat scenarios with accurate shield mechanics, healing items, and split decision paths.
 
 ## Features
 
-- **Shield Types**: Select from Light, Medium, or Heavy shields with realistic stats
-- **Weapon Selection**: Choose from all Arc Raiders weapons with upgrade level sliders
-- **Shield Mitigation**: Accurate damage mitigation calculations (shields reduce incoming damage by a percentage)
-- **Health & Shield Sliders**: Adjust current health and shield charge with visual indicators
-- **Healing Items**: Factor in health restoration items
-- **Shield Batteries**: Restore shield charge
-- **Visual Charts**: Bar graphs comparing survivability across different scenarios
-
-## Data Sources
-
-- Weapon data: [nateblaine/arcraiders-data](https://github.com/nateblaine/arcraiders-data)
-- Game mechanics: [Arc Raiders Wiki](https://arcraiders.wiki/)
-
-## Getting Started
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Run the development server (port 5174):
-```bash
-npm run dev
-```
-
-3. Build for production:
-```bash
-npm run build
-```
+- **Event Timeline**: Build combat sequences with shots, heals, shields, and delays
+- **Split Paths**: Compare multiple tactical approaches with branching scenarios
+- **Shield System**: Accurate damage mitigation (Light/Medium/Heavy shields)
+- **Visual Graph**: Real-time health/shield tracking across all event paths
+- **URL Sharing**: Save and share scenarios via URL parameters
 
 ## How Shields Work
 
@@ -55,17 +31,14 @@ Shields in Arc Raiders **mitigate damage** rather than adding extra health:
 - First shot: Player takes 5.46 HP damage, shield loses 9.5 charge
 - After ~7 shots: Shield depleted, player takes full 9.5 damage per shot
 
-## Calculator Features
+## Quick Start
 
-- **Base Health**: 100 HP (adjustable with slider)
-- **Shield System**: Three shield types with different charge and mitigation values
-- **Healing Items**: Restores health up to 100 HP maximum
-- **Shield Batteries**: Restores shield charge
-- **Weapon Upgrades**: Slider to select weapon tier/variant (I, II, III, IV, etc.)
+```bash
+npm install
+npm run dev
+```
 
-The calculator shows:
-- Shots to kill with current health and shield
-- Shots to kill after using healing items
-- Shots to kill after restoring shield charge
-- Combined effect of both healing and shield restoration
-- Visual bar chart comparing all scenarios
+## Data Sources
+
+- Weapons: [nateblaine/arcraiders-data](https://github.com/nateblaine/arcraiders-data)
+- Mechanics: [Arc Raiders Wiki](https://arcraiders.wiki/)
