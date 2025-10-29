@@ -1631,17 +1631,6 @@ function App() {
                 </div>
               </div>
             ))}
-            <div className="event-actions">
-              <button onClick={() => addEvent('shot')}>
-                + Shot
-              </button>
-              <button onClick={() => addEvent('heal')}>
-                + Heal
-              </button>
-              <button onClick={() => addEvent('shield')}>
-                + Shield
-              </button>
-            </div>
           </div>
         </div>
 
