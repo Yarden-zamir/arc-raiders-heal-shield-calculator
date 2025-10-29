@@ -93,6 +93,25 @@ function BarChart({ data, maxValue }) {
 function HealthOverEventsGraph({ paths, showSeparate }) {
   const [hoveredPath, setHoveredPath] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [dimensions, setDimensions] = useState({ width: 800, height: 400 })
+  const containerRef = useState(null)[0]
+
+  // Update dimensions on mount and resize
+  useEffect(() => {
+    const updateDimensions = () => {
+      const containerWidth = window.innerWidth
+      const isMobile = containerWidth <= 768
+      const width = isMobile
+        ? Math.max(280, containerWidth - 40)
+        : Math.min(800, containerWidth - 100)
+      const height = isMobile ? 300 : 400
+      setDimensions({ width, height })
+    }
+
+    updateDimensions()
+    window.addEventListener('resize', updateDimensions)
+    return () => window.removeEventListener('resize', updateDimensions)
+  }, [])
 
   if (!paths || paths.length === 0) return null
 
@@ -102,9 +121,11 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
     ? Math.max(...paths.flatMap(p => p.data.map(d => Math.max(d.health, d.shield))))
     : Math.max(...paths.flatMap(p => p.data.map(d => d.totalHp)))
 
-  const width = Math.min(800, window.innerWidth - 100)
-  const height = 400
-  const padding = { top: 20, right: 30, bottom: 50, left: 60 }
+  const { width, height } = dimensions
+  const isMobile = width <= 600
+  const padding = isMobile
+    ? { top: 15, right: 10, bottom: 40, left: 40 }
+    : { top: 20, right: 30, bottom: 50, left: 60 }
   const graphWidth = width - padding.left - padding.right
   const graphHeight = height - padding.top - padding.bottom
 
@@ -142,9 +163,9 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
   }))
 
   return (
-    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '10px', marginTop: '20px', position: 'relative' }}>
+    <div className="graph-container">
       <h3 style={{ color: '#00d4ff', marginBottom: '15px' }}>Health Over Events</h3>
-      <div style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto' }}>
+      <div className="graph-wrapper">
         <svg
           width={width}
           height={height}
@@ -167,10 +188,10 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
               strokeWidth="1"
             />
             <text
-              x={padding.left - 10}
+              x={padding.left - 5}
               y={yScale(hp) + 5}
               fill="#888"
-              fontSize="12"
+              fontSize={isMobile ? "10" : "12"}
               textAnchor="end"
             >
               {hp}
@@ -185,7 +206,7 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
               x={xScale(eventIdx)}
               y={height - padding.bottom + 20}
               fill="#888"
-              fontSize="12"
+              fontSize={isMobile ? "10" : "12"}
               textAnchor="middle"
             >
               {eventIdx}
@@ -197,7 +218,7 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
           x={padding.left / 2}
           y={height / 2}
           fill="#00d4ff"
-          fontSize="14"
+          fontSize={isMobile ? "11" : "14"}
           textAnchor="middle"
           transform={`rotate(-90, ${padding.left / 2}, ${height / 2})`}
         >
@@ -207,7 +228,7 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
           x={width / 2}
           y={height - 10}
           fill="#00d4ff"
-          fontSize="14"
+          fontSize={isMobile ? "11" : "14"}
           textAnchor="middle"
         >
           Event Number
@@ -400,7 +421,7 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
               x={mousePos.x + 15}
               y={mousePos.y - 15}
               fill={hoveredPath.color}
-              fontSize="14"
+              fontSize={isMobile ? "11" : "14"}
               fontWeight="bold"
             >
               {hoveredPath.label}
@@ -411,7 +432,7 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}>
+      <div className="graph-legend">
         {pathsWithColors.map((path, idx) => {
           const finalHealth = path.data[path.data.length - 1]?.health || 0
           const finalShield = path.data[path.data.length - 1]?.shield || 0
@@ -429,10 +450,8 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
           return (
             <div
               key={idx}
+              className="legend-item"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
                 cursor: 'pointer',
                 opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
                 transition: 'opacity 0.2s'
@@ -442,13 +461,13 @@ function HealthOverEventsGraph({ paths, showSeparate }) {
             >
               {showSeparate ? (
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <div style={{ width: '20px', height: '3px', background: path.healthColor, border: idx % 2 === 0 ? 'none' : '1px dashed rgba(255,255,255,0.5)' }} />
-                  <div style={{ width: '20px', height: '3px', background: path.shieldColor, border: idx % 2 === 0 ? 'none' : '1px dashed rgba(255,255,255,0.5)' }} />
+                  <div className="legend-color" style={{ background: path.healthColor, border: idx % 2 === 0 ? 'none' : '1px dashed rgba(255,255,255,0.5)' }} />
+                  <div className="legend-color" style={{ background: path.shieldColor, border: idx % 2 === 0 ? 'none' : '1px dashed rgba(255,255,255,0.5)' }} />
                 </div>
               ) : (
-                <div style={{ width: '20px', height: '3px', background: path.color }} />
+                <div className="legend-color" style={{ background: path.color }} />
               )}
-              <span style={{ color: '#a0a0a0', fontSize: '14px' }}>
+              <span style={{ color: '#a0a0a0' }}>
                 {path.label} <span style={{ color: finalHealth > 0 ? '#44ff44' : '#ff4444' }}>({finalStatus})</span>
               </span>
             </div>
@@ -1169,15 +1188,13 @@ function App() {
 
         <div className="section">
           <h2>Event Timeline</h2>
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '10px' }}>
+          <div className="timeline-container">
             {timeline.map((event, index) => (
               <div
                 key={event.id}
+                className="timeline-event"
                 onDragOver={(e) => handleDragOver(e, index)}
                 style={{
-                  marginBottom: '15px',
-                  display: 'flex',
-                  gap: '10px',
                   opacity: draggedIndex === index ? 0.5 : 1,
                   transform: dragOverIndex === index && draggedIndex !== index ? 'scale(1.02)' : 'scale(1)',
                   transition: 'opacity 0.2s, transform 0.2s',
@@ -1190,76 +1207,65 @@ function App() {
                   draggable
                   onDragStart={() => handleDragStart(index)}
                   onDragEnd={handleDragEnd}
-                  style={{
-                    cursor: 'grab',
-                    padding: '10px 5px',
-                    background: 'rgba(0,212,255,0.2)',
-                    borderRadius: '5px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#00d4ff',
-                    fontSize: '16px',
-                    userSelect: 'none',
-                    minWidth: '25px'
-                  }}
+                  className="drag-handle"
                   title="Drag to reorder"
                 >
                   ⋮⋮
                 </div>
-                <div style={{ flex: 1 }}>
+                <div className="event-card">
                 {event.type === 'split' ? (
-                  <div style={{ background: 'rgba(255,170,0,0.2)', padding: '10px', borderRadius: '8px', border: '2px dashed #ffaa00' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <strong style={{ color: '#ffaa00' }}>Split Event</strong>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => addBranchToSplit(event.id)} style={{ fontSize: '12px', padding: '4px 8px' }}>
+                  <div className="split-event">
+                    <div className="split-header">
+                      <strong style={{ color: 'var(--color-warning)' }}>Split Event</strong>
+                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+                        <button onClick={() => addBranchToSplit(event.id)} style={{ fontSize: '0.75rem' }}>
                           + Branch
                         </button>
-                        <button onClick={() => removeEvent(event.id)} style={{ fontSize: '12px', padding: '4px 8px', background: '#ff4444' }}>
+                        <button onClick={() => removeEvent(event.id)} style={{ fontSize: '0.75rem', background: 'var(--color-danger)' }}>
                           Remove Split
                         </button>
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gap: '10px', marginLeft: '20px' }}>
+                    <div className="split-branches">
                       {event.branches.map((branch, branchIdx) => (
-                        <div key={branch.id} style={{ background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '5px', border: '1px solid #888' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div key={branch.id} className="branch-card">
+                          <div className="branch-header">
                             <input
                               type="text"
                               value={branch.label}
                               onChange={(e) => updateBranch(event.id, branch.id, { label: e.target.value })}
-                              style={{ width: '120px', padding: '6px', fontWeight: 'bold' }}
+                              style={{ flex: '1', minWidth: '120px', padding: '0.5rem', fontWeight: 'bold' }}
                               placeholder="Label"
                             />
                             {event.branches.length > 2 && (
-                              <button onClick={() => removeBranch(event.id, branch.id)} style={{ fontSize: '11px', padding: '4px 8px', background: '#ff4444' }}>
+                              <button onClick={() => removeBranch(event.id, branch.id)} style={{ fontSize: '0.75rem', padding: '0.5rem', background: 'var(--color-danger)' }}>
                                 Remove Branch
                               </button>
                             )}
                           </div>
 
                           {/* Events within this branch */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '10px' }}>
+                          <div className="branch-events">
                             {branch.events.map((branchEvent, eventIdx) => (
-                              <div key={branchEvent.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', border: '1px solid #666' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ color: '#888', fontSize: '12px', minWidth: '18px', fontWeight: 'bold' }}>{eventIdx + 1}.</span>
+                              <div key={branchEvent.id} className="branch-event-item">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
+                                  <span style={{ color: '#888', fontSize: '0.75rem', minWidth: '18px', fontWeight: 'bold' }}>{eventIdx + 1}.</span>
 
                                   {(branchEvent.count || 1) > 1 && (
                                     <button
                                       onClick={() => toggleMultiplier(branchEvent.id)}
                                       style={{
-                                        padding: '4px 8px',
-                                        fontSize: '11px',
-                                        background: expandedMultipliers.has(branchEvent.id) ? '#00d4ff' : '#555',
-                                        minWidth: '32px'
+                                        padding: '0.25rem 0.5rem',
+                                        fontSize: '0.75rem',
+                                        background: expandedMultipliers.has(branchEvent.id) ? 'var(--color-primary)' : '#555'
                                       }}
                                     >
                                       {branchEvent.count}x
                                     </button>
                                   )}
+                                </div>
 
+                                <div className="event-row">
                                   <select
                                     value={branchEvent.type}
                                     onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, {
@@ -1267,19 +1273,21 @@ function App() {
                                       weaponId: e.target.value === 'shot' ? getLastUsedWeapon() : undefined,
                                       itemId: e.target.value === 'heal' ? DEFAULTS.healItem : e.target.value === 'shield' ? DEFAULTS.shieldItem : undefined
                                     })}
-                                    style={{ padding: '5px', width: '80px', fontSize: '12px' }}
+                                    style={{ width: '100%' }}
                                   >
                                     <option value="shot">Shot</option>
                                     <option value="heal">Heal</option>
                                     <option value="shield">Shield</option>
                                     <option value="nothing">Nothing</option>
                                   </select>
+                                </div>
 
-                                  {branchEvent.type === 'shot' && (
+                                {branchEvent.type === 'shot' && (
+                                  <div className="event-row">
                                     <select
                                       value={branchEvent.weaponId || getLastUsedWeapon()}
                                       onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { weaponId: e.target.value })}
-                                      style={{ flex: 1, padding: '5px', fontSize: '12px' }}
+                                      style={{ width: '100%' }}
                                     >
                                       {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
                                         <option key={weapon.id} value={weapon.id}>
@@ -1287,13 +1295,15 @@ function App() {
                                         </option>
                                       ))}
                                     </select>
-                                  )}
+                                  </div>
+                                )}
 
-                                  {branchEvent.type === 'heal' && (
+                                {branchEvent.type === 'heal' && (
+                                  <div className="event-row">
                                     <select
                                       value={branchEvent.itemId || DEFAULTS.healItem}
                                       onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { itemId: e.target.value })}
-                                      style={{ flex: 1, padding: '5px', fontSize: '12px' }}
+                                      style={{ width: '100%' }}
                                     >
                                       {HEALING_ITEMS.map(item => (
                                         <option key={item.id} value={item.id}>
@@ -1301,13 +1311,15 @@ function App() {
                                         </option>
                                       ))}
                                     </select>
-                                  )}
+                                  </div>
+                                )}
 
-                                  {branchEvent.type === 'shield' && (
+                                {branchEvent.type === 'shield' && (
+                                  <div className="event-row">
                                     <select
                                       value={branchEvent.itemId || DEFAULTS.shieldItem}
                                       onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { itemId: e.target.value })}
-                                      style={{ flex: 1, padding: '5px', fontSize: '12px' }}
+                                      style={{ width: '100%' }}
                                     >
                                       {SHIELD_ITEMS.map(item => (
                                         <option key={item.id} value={item.id}>
@@ -1315,30 +1327,32 @@ function App() {
                                         </option>
                                       ))}
                                     </select>
-                                  )}
+                                  </div>
+                                )}
 
+                                <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)' }}>
                                   {(branchEvent.count || 1) === 1 && (
                                     <button
                                       onClick={() => {
                                         updateBranchEvent(event.id, branch.id, branchEvent.id, { count: 2 })
                                         toggleMultiplier(branchEvent.id)
                                       }}
-                                      style={{ fontSize: '11px', padding: '5px 8px', background: '#555' }}
+                                      style={{ fontSize: '0.75rem', flex: 1, background: '#555' }}
                                     >
                                       Multiple
                                     </button>
                                   )}
 
                                   {branch.events.length > 1 && (
-                                    <button onClick={() => removeEventFromBranch(event.id, branch.id, branchEvent.id)} style={{ fontSize: '12px', padding: '5px 8px', background: '#ff4444' }}>
-                                      ×
+                                    <button onClick={() => removeEventFromBranch(event.id, branch.id, branchEvent.id)} style={{ fontSize: '0.75rem', padding: '0.5rem', background: 'var(--color-danger)' }}>
+                                      Remove
                                     </button>
                                   )}
                                 </div>
 
                                 {expandedMultipliers.has(branchEvent.id) && (
-                                  <div style={{ marginTop: '6px', padding: '8px', background: 'rgba(0,212,255,0.1)', borderRadius: '4px' }}>
-                                    <label style={{ display: 'block', color: '#00d4ff', fontSize: '12px', marginBottom: '5px', fontWeight: '600' }}>
+                                  <div style={{ marginTop: 'var(--spacing-xs)', padding: 'var(--spacing-sm)', background: 'rgba(0,212,255,0.1)', borderRadius: 'var(--radius-sm)' }}>
+                                    <label style={{ display: 'block', color: 'var(--color-primary)', fontSize: '0.75rem', marginBottom: 'var(--spacing-xs)', fontWeight: '600' }}>
                                       Repeat: {branchEvent.count || 1}x
                                     </label>
                                     <input
@@ -1355,17 +1369,17 @@ function App() {
                             ))}
 
                             {/* Add event buttons */}
-                            <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                              <button onClick={() => addEventToBranch(event.id, branch.id, 'shot')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-sm)' }}>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'shot')} style={{ fontSize: '0.75rem' }}>
                                 + Shot
                               </button>
-                              <button onClick={() => addEventToBranch(event.id, branch.id, 'heal')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'heal')} style={{ fontSize: '0.75rem' }}>
                                 + Heal
                               </button>
-                              <button onClick={() => addEventToBranch(event.id, branch.id, 'shield')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'shield')} style={{ fontSize: '0.75rem' }}>
                                 + Shield
                               </button>
-                              <button onClick={() => addEventToBranch(event.id, branch.id, 'nothing')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'nothing')} style={{ fontSize: '0.75rem' }}>
                                 + Nothing
                               </button>
                             </div>
@@ -1375,126 +1389,144 @@ function App() {
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(0,212,255,0.1)', borderRadius: '8px', border: '1px solid #00d4ff' }}>
-                      <span style={{ color: '#00d4ff', minWidth: '80px' }}>Event {index + 1}:</span>
+                  <div className="event-controls">
+                    {/* Event Header */}
+                    <div className="event-row" style={{ marginBottom: 'var(--spacing-sm)' }}>
+                      <span className="event-label">Event {index + 1}</span>
                       {(event.count || 1) > 1 && (
                         <button
                           onClick={() => toggleMultiplier(event.id)}
                           style={{
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            background: expandedMultipliers.has(event.id) ? '#00d4ff' : '#555',
-                            minWidth: '45px'
+                            background: expandedMultipliers.has(event.id) ? 'var(--color-primary)' : '#555',
+                            padding: '0.5rem 0.75rem',
+                            fontSize: '0.75rem'
                           }}
                           title="Toggle multiplier"
                         >
                           {event.count}x
                         </button>
                       )}
-                    <select
-                      value={event.type}
-                      onChange={(e) => updateEvent(event.id, {
-                        type: e.target.value,
-                        weaponId: e.target.value === 'shot' ? getLastUsedWeapon() : undefined,
-                        itemId: e.target.value === 'heal' ? DEFAULTS.healItem : e.target.value === 'shield' ? DEFAULTS.shieldItem : undefined
-                      })}
-                      style={{ padding: '6px', width: '80px' }}
-                    >
-                      <option value="shot">Shot</option>
-                      <option value="heal">Heal</option>
-                      <option value="shield">Shield</option>
-                      <option value="nothing">Nothing</option>
-                    </select>
-                    {event.type === 'shot' && (
+                    </div>
+
+                    {/* Event Type Selection */}
+                    <div className="event-row">
                       <select
-                        value={event.weaponId || getLastUsedWeapon()}
-                        onChange={(e) => updateEvent(event.id, { weaponId: e.target.value })}
-                        style={{ flex: 1, padding: '6px' }}
+                        value={event.type}
+                        onChange={(e) => updateEvent(event.id, {
+                          type: e.target.value,
+                          weaponId: e.target.value === 'shot' ? getLastUsedWeapon() : undefined,
+                          itemId: e.target.value === 'heal' ? DEFAULTS.healItem : e.target.value === 'shield' ? DEFAULTS.shieldItem : undefined
+                        })}
+                        style={{ width: '100%' }}
                       >
-                        {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
-                          <option key={weapon.id} value={weapon.id}>
-                            {weapon.name} ({weapon.damage} dmg)
-                          </option>
-                        ))}
+                        <option value="shot">Shot</option>
+                        <option value="heal">Heal</option>
+                        <option value="shield">Shield</option>
+                        <option value="nothing">Nothing</option>
                       </select>
+                    </div>
+
+                    {/* Item/Weapon Selection */}
+                    {event.type === 'shot' && (
+                      <div className="event-row">
+                        <select
+                          value={event.weaponId || getLastUsedWeapon()}
+                          onChange={(e) => updateEvent(event.id, { weaponId: e.target.value })}
+                          style={{ width: '100%' }}
+                        >
+                          {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
+                            <option key={weapon.id} value={weapon.id}>
+                              {weapon.name} ({weapon.damage} dmg)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                     {event.type === 'heal' && (
-                      <select
-                        value={event.itemId || DEFAULTS.healItem}
-                        onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
-                        style={{ flex: 1, padding: '6px' }}
-                      >
-                        {HEALING_ITEMS.map(item => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} (+{item.healing} HP)
-                          </option>
-                        ))}
-                      </select>
+                      <div className="event-row">
+                        <select
+                          value={event.itemId || DEFAULTS.healItem}
+                          onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
+                          style={{ width: '100%' }}
+                        >
+                          {HEALING_ITEMS.map(item => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} (+{item.healing} HP)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                     {event.type === 'shield' && (
-                      <select
-                        value={event.itemId || DEFAULTS.shieldItem}
-                        onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
-                        style={{ flex: 1, padding: '6px' }}
-                      >
-                        {SHIELD_ITEMS.map(item => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} (+{item.shieldRestore})
-                          </option>
-                        ))}
-                      </select>
+                      <div className="event-row">
+                        <select
+                          value={event.itemId || DEFAULTS.shieldItem}
+                          onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
+                          style={{ width: '100%' }}
+                        >
+                          {SHIELD_ITEMS.map(item => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} (+{item.shieldRestore})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
-                    {(event.count || 1) === 1 && (
-                      <button
-                        onClick={() => {
-                          updateEvent(event.id, { count: 2 })
-                          toggleMultiplier(event.id)
-                        }}
-                        style={{ fontSize: '12px', padding: '6px 12px', background: '#555' }}
-                        title="Add multiplier"
-                      >
-                        Multiple
+
+                    {/* Multiplier Control */}
+                    {expandedMultipliers.has(event.id) && (
+                      <div style={{ padding: 'var(--spacing-md)', background: 'rgba(0,212,255,0.15)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-primary)' }}>
+                        <label style={{ display: 'block', color: 'var(--color-primary)', fontSize: '0.875rem', marginBottom: 'var(--spacing-sm)', fontWeight: '600' }}>
+                          Repeat: {event.count || 1}x
+                        </label>
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
+                          value={event.count || 1}
+                          onChange={(e) => updateEvent(event.id, { count: parseInt(e.target.value) })}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="event-actions">
+                      {(event.count || 1) === 1 && (
+                        <button
+                          onClick={() => {
+                            updateEvent(event.id, { count: 2 })
+                            toggleMultiplier(event.id)
+                          }}
+                          style={{ background: '#555' }}
+                          title="Add multiplier"
+                        >
+                          Multiple
+                        </button>
+                      )}
+                      <button onClick={() => addSplitEvent(index)} style={{ background: 'var(--color-warning)' }}>
+                        Split Here
                       </button>
-                    )}
-                    <button onClick={() => addSplitEvent(index)} style={{ fontSize: '12px', padding: '6px 12px', background: '#ffaa00' }}>
-                      Split Here
-                    </button>
-                    <button onClick={() => removeEvent(event.id)} style={{ fontSize: '12px', padding: '6px 12px', background: '#ff4444' }}>
-                      Remove
-                    </button>
-                  </div>
-                  {expandedMultipliers.has(event.id) && (
-                    <div style={{ marginTop: '10px', padding: '15px', background: 'rgba(0,212,255,0.15)', borderRadius: '8px', border: '1px solid #00d4ff' }}>
-                      <label style={{ display: 'block', color: '#00d4ff', fontSize: '14px', marginBottom: '8px' }}>
-                        Repeat: {event.count || 1}x
-                      </label>
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={event.count || 1}
-                        onChange={(e) => updateEvent(event.id, { count: parseInt(e.target.value) })}
-                        style={{ width: '100%' }}
-                      />
+                      <button onClick={() => removeEvent(event.id)} style={{ background: 'var(--color-danger)' }}>
+                        Remove
+                      </button>
                     </div>
-                  )}
                   </div>
                 )}
                 </div>
               </div>
             ))}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-              <button onClick={() => addEvent('shot')} style={{ flex: 1, padding: '10px' }}>
+            <div className="event-actions">
+              <button onClick={() => addEvent('shot')}>
                 + Shot
               </button>
-              <button onClick={() => addEvent('heal')} style={{ flex: 1, padding: '10px' }}>
+              <button onClick={() => addEvent('heal')}>
                 + Heal
               </button>
-              <button onClick={() => addEvent('shield')} style={{ flex: 1, padding: '10px' }}>
+              <button onClick={() => addEvent('shield')}>
                 + Shield
               </button>
-              <button onClick={() => addEvent('nothing')} style={{ flex: 1, padding: '10px' }}>
+              <button onClick={() => addEvent('nothing')}>
                 + Nothing
               </button>
             </div>

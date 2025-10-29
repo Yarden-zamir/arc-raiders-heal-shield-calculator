@@ -33,9 +33,16 @@ Shields in Arc Raiders **mitigate damage** rather than adding extra health:
 
 ## Quick Start
 
+### Development
 ```bash
 npm install
 npm run dev
+```
+
+### Production
+```bash
+npm run build
+npx serve dist
 ```
 
 ## Data Sources
