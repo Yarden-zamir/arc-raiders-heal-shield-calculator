@@ -136,6 +136,12 @@ if [ ! -d ".git" ]; then
     exit 1
 fi
 
+# Load nvm if it exists (needed when running from systemd)
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"
+fi
+
 # Ensure PATH includes common npm locations
 export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 
