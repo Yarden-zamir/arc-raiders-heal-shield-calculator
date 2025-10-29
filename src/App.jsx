@@ -1338,6 +1338,17 @@ function App() {
 
         <div className="section">
           <h2>Event Timeline</h2>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+            <button onClick={() => addEvent('shot')}>
+              + Shot
+            </button>
+            <button onClick={() => addEvent('heal')}>
+              + Heal
+            </button>
+            <button onClick={() => addEvent('shield')}>
+              + Shield
+            </button>
+          </div>
           <div className="timeline-container">
             {timeline.map((event, index) => (
               <div
