@@ -96,15 +96,15 @@ h2 {
 
 /* Form elements - Mobile optimized */
 .input-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0.625rem;
 }
 
 label {
   display: block;
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: 0.25rem;
   color: var(--color-text-muted);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -113,12 +113,12 @@ select,
 input[type="number"],
 input[type="text"] {
   width: 100%;
-  padding: 0.875rem;
+  padding: 0.625rem;
   background: rgba(255, 255, 255, 0.08);
   border: 2px solid rgba(0, 212, 255, 0.3);
   border-radius: var(--radius-sm);
   color: var(--color-text);
-  font-size: 1rem;
+  font-size: 0.875rem;
   transition: all 0.3s ease;
   cursor: pointer;
   -webkit-appearance: none;
@@ -149,16 +149,16 @@ button {
   background: linear-gradient(135deg, var(--color-primary) 0%, #0099cc 100%);
   color: #fff;
   border: none;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
   position: relative;
   overflow: hidden;
-  min-height: 44px;
+  min-height: 40px;
   touch-action: manipulation;
 }
 
@@ -193,15 +193,15 @@ button:active {
   background: rgba(0, 212, 255, 0.1);
   border: 2px solid var(--color-primary);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  padding: 0.625rem;
+  margin-top: 0.75rem;
 }
 
 .result-item {
   background: rgba(0, 0, 0, 0.3);
-  padding: var(--spacing-md);
+  padding: 0.5rem;
   border-radius: var(--radius-sm);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0.5rem;
   border-left: 4px solid var(--color-primary);
 }
 
@@ -346,28 +346,28 @@ input[type="checkbox"] {
 /* Timeline event styles */
 .timeline-container {
   background: rgba(0, 0, 0, 0.3);
-  padding: var(--spacing-md);
+  padding: 0.5rem;
   border-radius: var(--radius-md);
 }
 
 .timeline-event {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0.5rem;
   display: flex;
-  gap: var(--spacing-sm);
+  gap: 0.375rem;
 }
 
 .drag-handle {
   cursor: grab;
-  padding: var(--spacing-sm);
+  padding: 0.375rem;
   background: rgba(0, 212, 255, 0.2);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-primary);
-  font-size: 1rem;
+  font-size: 0.875rem;
   user-select: none;
-  min-width: 40px;
+  min-width: 32px;
   transition: all 0.3s ease;
 }
 
@@ -385,41 +385,41 @@ input[type="checkbox"] {
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
   border-radius: var(--radius-sm);
-  padding: var(--spacing-md);
+  padding: 0.5rem;
 }
 
 .event-controls {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 0.375rem;
 }
 
 .event-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 0.375rem;
   flex-wrap: wrap;
 }
 
 .event-label {
   color: var(--color-primary);
   font-weight: 600;
-  min-width: 80px;
-  font-size: 0.875rem;
+  min-width: 60px;
+  font-size: 0.8125rem;
 }
 
 .event-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.375rem;
+  margin-top: 0.5rem;
 }
 
 /* Split event styles */
 .split-event {
   background: rgba(255, 170, 0, 0.1);
   border: 2px dashed rgba(255, 170, 0, 0.5);
-  padding: var(--spacing-md);
+  padding: 0.5rem;
   border-radius: var(--radius-sm);
 }
 
@@ -427,20 +427,20 @@ input[type="checkbox"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: 0.375rem;
 }
 
 .split-branches {
   display: grid;
-  gap: var(--spacing-md);
-  margin-left: var(--spacing-md);
+  gap: 0.5rem;
+  margin-left: 0.5rem;
 }
 
 .branch-card {
   background: rgba(0, 0, 0, 0.3);
-  padding: var(--spacing-md);
+  padding: 0.5rem;
   border-radius: var(--radius-sm);
   border: 1px solid #888;
 }
@@ -449,23 +449,23 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 0.375rem;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: 0.375rem;
 }
 
 .branch-events {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  margin-left: var(--spacing-sm);
+  gap: 0.375rem;
+  margin-left: 0.375rem;
 }
 
 .branch-event-item {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm);
+  gap: 0.25rem;
+  padding: 0.375rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: var(--radius-sm);
   border: 1px solid #666;
@@ -474,9 +474,9 @@ input[type="checkbox"] {
 /* Graph container */
 .graph-container {
   background: rgba(0, 0, 0, 0.2);
-  padding: var(--spacing-md);
+  padding: 0.5rem;
   border-radius: var(--radius-md);
-  margin-top: var(--spacing-lg);
+  margin-top: 0.75rem;
 }
 
 .graph-wrapper {
@@ -487,15 +487,15 @@ input[type="checkbox"] {
 .graph-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
+  gap: 0.375rem;
+  margin-top: 0.5rem;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: 0.75rem;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
 }
 
 .legend-color {
