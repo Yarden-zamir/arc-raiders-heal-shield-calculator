@@ -36,6 +36,7 @@ After=network.target
 Type=oneshot
 User=root
 WorkingDirectory=$SCRIPT_DIR
+Environment="HOME=/root"
 Environment="PATH=$PATH_ENV"
 Environment="NODE_PATH=$NODE_PATH"
 ExecStart=$SCRIPT_DIR/update.sh
