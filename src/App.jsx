@@ -1631,6 +1631,49 @@ function App() {
                 </div>
               </div>
             ))}
+            {/* Add Event Buttons - Positioned after all events to avoid overlay issues */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '0.375rem', 
+              marginTop: '0.75rem',
+              justifyContent: 'center',
+              position: 'relative',
+              zIndex: 1
+            }}>
+              <button 
+                onClick={() => addEvent('shot')}
+                style={{ 
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.6875rem',
+                  minHeight: 'auto',
+                  minWidth: '70px'
+                }}
+              >
+                + Shot
+              </button>
+              <button 
+                onClick={() => addEvent('heal')}
+                style={{ 
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.6875rem',
+                  minHeight: 'auto',
+                  minWidth: '70px'
+                }}
+              >
+                + Heal
+              </button>
+              <button 
+                onClick={() => addEvent('shield')}
+                style={{ 
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.6875rem',
+                  minHeight: 'auto',
+                  minWidth: '70px'
+                }}
+              >
+                + Shield
+              </button>
+            </div>
           </div>
         </div>
 
