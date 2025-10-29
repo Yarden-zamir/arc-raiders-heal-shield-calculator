@@ -21,6 +21,11 @@ install_service() {
         exit 1
     fi
 
+    # Find npm path
+    NPM_PATH=$(which npm 2>/dev/null || echo "/usr/bin/npm")
+    NODE_PATH=$(which node 2>/dev/null || echo "/usr/bin/node")
+    PATH_ENV="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
     # Create service file
     cat > /etc/systemd/system/arc-calculator-update.service <<EOF
 [Unit]
@@ -31,6 +36,8 @@ After=network.target
 Type=oneshot
 User=root
 WorkingDirectory=$SCRIPT_DIR
+Environment="PATH=$PATH_ENV"
+Environment="NODE_PATH=$NODE_PATH"
 ExecStart=$SCRIPT_DIR/update.sh
 StandardOutput=append:/var/log/arc-calculator-update.log
 StandardError=append:/var/log/arc-calculator-update.log
@@ -126,6 +133,16 @@ esac
 # Check if we're in a git repository
 if [ ! -d ".git" ]; then
     echo "❌ Error: Not a git repository"
+    exit 1
+fi
+
+# Ensure PATH includes common npm locations
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+
+# Check if npm is available
+if ! command -v npm &> /dev/null; then
+    echo "❌ Error: npm not found in PATH"
+    echo "PATH: $PATH"
     exit 1
 fi
 
