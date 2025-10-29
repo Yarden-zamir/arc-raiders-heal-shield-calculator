@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+    <h1>Testing items.json</h1>
+    <div id="output"></div>
+    <script type="module">
+        import items from './items.json';
+        console.log('Items:', items);
+        console.log('Weapons with damage:', items.filter(i => i.damage && i.damage > 0));
+        document.getElementById('output').innerHTML = `
+            <p>Total items: ${items.length}</p>
+            <p>Weapons with damage: ${items.filter(i => i.damage && i.damage > 0).length}</p>
+        `;
+    </script>
+</body>
+</html>

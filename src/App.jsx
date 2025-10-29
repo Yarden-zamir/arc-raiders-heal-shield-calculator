@@ -1,0 +1,1522 @@
+import { useState, useEffect } from 'react'
+import { WEAPONS } from './weaponsData'
+
+// Default configuration
+const DEFAULTS = {
+  weapon: 'ferro',
+  healItem: 'bandage',
+  shieldItem: 'shield_recharger',
+  shieldType: 'light_shield'
+}
+
+// Healing items with data from Arc Raiders wiki
+const HEALING_ITEMS = [
+  { id: 'vita_shot', name: 'Vita Shot', healing: 50, type: 'instant' },
+  { id: 'sterilized_bandage', name: 'Sterilized Bandage', healing: 50, type: 'over_time' },
+  { id: 'herbal_bandage', name: 'Herbal Bandage', healing: 35, type: 'over_time' },
+  { id: 'fruit_mix', name: 'Fruit Mix', healing: 25, type: 'instant' },
+  { id: 'bandage', name: 'Bandage', healing: 20, type: 'over_time' },
+  { id: 'vita_spray', name: 'Vita Spray', healing: 15, type: 'continuous' },
+  { id: 'expired_pasta', name: 'Expired Pasta', healing: 15, type: 'instant' },
+  { id: 'mushroom', name: 'Mushroom', healing: 15, type: 'instant' },
+  { id: 'agave', name: 'Agave', healing: 10, type: 'over_time' },
+  { id: 'fabric', name: 'Fabric', healing: 10, type: 'over_time' },
+  { id: 'moss', name: 'Moss', healing: 10, type: 'over_time' },
+  { id: 'resin', name: 'Resin', healing: 10, type: 'over_time' }
+]
+
+// Shield recharge items from Arc Raiders wiki
+const SHIELD_ITEMS = [
+  { id: 'surge_shield_recharger', name: 'Surge Shield Recharger', shieldRestore: 50, type: 'instant' },
+  { id: 'shield_recharger', name: 'Shield Recharger', shieldRestore: 40, type: 'over_time' },
+  { id: 'arc_powercell', name: 'ARC Powercell', shieldRestore: 20, type: 'over_time' }
+]
+
+// Shield types that can be equipped (data from Arc Raiders wiki)
+const SHIELD_TYPES = [
+  {
+    id: 'light_shield',
+    name: 'Light Shield',
+    shieldCharge: 40,
+    damageMitigation: 40,
+    movementSpeedModifier: 0,
+    description: 'Low protection, no mobility penalty'
+  },
+  {
+    id: 'medium_shield',
+    name: 'Medium Shield',
+    shieldCharge: 70,
+    damageMitigation: 42.5,
+    movementSpeedModifier: -5,
+    description: 'Balanced protection, 5% speed reduction'
+  },
+  {
+    id: 'heavy_shield',
+    name: 'Heavy Shield',
+    shieldCharge: 80,
+    damageMitigation: 52.5,
+    movementSpeedModifier: -15,
+    description: 'Maximum protection, 15% speed reduction'
+  }
+]
+
+// Component for bar chart
+function BarChart({ data, maxValue }) {
+  const maxShots = Math.max(...data.map(d => d.value), 1)
+
+  return (
+    <div className="bar-chart">
+      {data.map((item, idx) => {
+        const percentage = (item.value / maxShots) * 100
+        return (
+          <div key={idx} className="bar-item">
+            <div className="bar-label">{item.label}</div>
+            <div className="bar-container">
+              <div
+                className="bar-fill"
+                style={{
+                  width: `${percentage}%`,
+                  backgroundColor: item.color || '#00d4ff'
+                }}
+              >
+                <span className="bar-value">{item.value}</span>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Component for line graph showing health over events
+function HealthOverEventsGraph({ paths, showSeparate }) {
+  const [hoveredPath, setHoveredPath] = useState(null)
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+
+  if (!paths || paths.length === 0) return null
+
+  // Find max events across all paths
+  const maxEvents = Math.max(...paths.map(p => p.data.length))
+  const maxHealth = showSeparate
+    ? Math.max(...paths.flatMap(p => p.data.map(d => Math.max(d.health, d.shield))))
+    : Math.max(...paths.flatMap(p => p.data.map(d => d.totalHp)))
+
+  const width = Math.min(800, window.innerWidth - 100)
+  const height = 400
+  const padding = { top: 20, right: 30, bottom: 50, left: 60 }
+  const graphWidth = width - padding.left - padding.right
+  const graphHeight = height - padding.top - padding.bottom
+
+  const xScale = (eventIndex) => {
+    if (maxEvents <= 1) return padding.left + graphWidth / 2
+    return padding.left + (eventIndex / (maxEvents - 1)) * graphWidth
+  }
+
+  const yScale = (hp) => {
+    if (maxHealth === 0) return padding.top + graphHeight
+    return padding.top + graphHeight - (hp / maxHealth) * graphHeight
+  }
+
+  // Calculate appropriate grid lines for y-axis based on maxHealth
+  const yGridValues = []
+  const yStep = maxHealth <= 100 ? 25 : maxHealth <= 200 ? 50 : 100
+  for (let i = 0; i <= Math.ceil(maxHealth / yStep); i++) {
+    yGridValues.push(i * yStep)
+  }
+
+  // Calculate x-axis labels
+  const xLabelCount = Math.min(maxEvents, 11)
+  const xLabels = Array.from({ length: xLabelCount }, (_, i) => {
+    if (maxEvents <= 1) return 0
+    return Math.round((i / (xLabelCount - 1)) * (maxEvents - 1))
+  })
+
+  // Assign colors to paths
+  const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffaa00', '#ff44ff', '#44ffff', '#ff8844', '#88ff44', '#4488ff', '#ff44aa', '#44ffaa']
+  const pathsWithColors = paths.map((path, idx) => ({
+    ...path,
+    color: colors[idx % colors.length],
+    healthColor: '#ff4444',
+    shieldColor: '#4444ff'
+  }))
+
+  return (
+    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '10px', marginTop: '20px', position: 'relative' }}>
+      <h3 style={{ color: '#00d4ff', marginBottom: '15px' }}>Health Over Events</h3>
+      <div style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto' }}>
+        <svg
+          width={width}
+          height={height}
+          style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '5px' }}
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+          }}
+          onMouseLeave={() => setHoveredPath(null)}
+        >
+          {/* Grid lines */}
+          {yGridValues.filter(hp => hp <= maxHealth).map(hp => (
+          <g key={`grid-${hp}`}>
+            <line
+              x1={padding.left}
+              y1={yScale(hp)}
+              x2={width - padding.right}
+              y2={yScale(hp)}
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth="1"
+            />
+            <text
+              x={padding.left - 10}
+              y={yScale(hp) + 5}
+              fill="#888"
+              fontSize="12"
+              textAnchor="end"
+            >
+              {hp}
+            </text>
+          </g>
+        ))}
+
+        {/* X-axis labels */}
+        {xLabels.map((eventIdx, i) => (
+            <text
+              key={`x-${i}`}
+              x={xScale(eventIdx)}
+              y={height - padding.bottom + 20}
+              fill="#888"
+              fontSize="12"
+              textAnchor="middle"
+            >
+              {eventIdx}
+            </text>
+          ))}
+
+        {/* Axis labels */}
+        <text
+          x={padding.left / 2}
+          y={height / 2}
+          fill="#00d4ff"
+          fontSize="14"
+          textAnchor="middle"
+          transform={`rotate(-90, ${padding.left / 2}, ${height / 2})`}
+        >
+          {showSeparate ? 'HP / Shield' : 'Total HP'}
+        </text>
+        <text
+          x={width / 2}
+          y={height - 10}
+          fill="#00d4ff"
+          fontSize="14"
+          textAnchor="middle"
+        >
+          Event Number
+        </text>
+
+        {/* Draw lines for each path */}
+        {pathsWithColors.map((path, idx) => {
+          if (showSeparate) {
+            // Show health and shield as separate lines
+            const healthPoints = path.data.map((d) => ({
+              x: xScale(d.eventIndex),
+              y: yScale(d.health)
+            }))
+            const shieldPoints = path.data.map((d) => ({
+              x: xScale(d.eventIndex),
+              y: yScale(d.shield)
+            }))
+
+            const healthPathData = healthPoints.map((p, i) =>
+              i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
+            ).join(' ')
+            const shieldPathData = shieldPoints.map((p, i) =>
+              i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
+            ).join(' ')
+
+            return (
+              <g key={idx}>
+                {/* Health line */}
+                <path
+                  d={healthPathData}
+                  stroke="transparent"
+                  strokeWidth="15"
+                  fill="none"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredPath(path)}
+                  onMouseLeave={() => setHoveredPath(null)}
+                />
+                <path
+                  d={healthPathData}
+                  stroke={path.healthColor}
+                  strokeWidth={hoveredPath?.label === path.label ? "5" : "3"}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray={idx % 2 === 0 ? "none" : "5,5"}
+                  style={{
+                    cursor: 'pointer',
+                    opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={() => setHoveredPath(path)}
+                />
+                {healthPoints.map((p, i) => (
+                  <circle
+                    key={`h-${i}`}
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredPath?.label === path.label ? "5" : "4"}
+                    fill={path.healthColor}
+                    stroke="rgba(0,0,0,0.5)"
+                    strokeWidth="2"
+                    style={{
+                      cursor: 'pointer',
+                      opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={() => setHoveredPath(path)}
+                  />
+                ))}
+
+                {/* Shield line */}
+                <path
+                  d={shieldPathData}
+                  stroke="transparent"
+                  strokeWidth="15"
+                  fill="none"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredPath(path)}
+                  onMouseLeave={() => setHoveredPath(null)}
+                />
+                <path
+                  d={shieldPathData}
+                  stroke={path.shieldColor}
+                  strokeWidth={hoveredPath?.label === path.label ? "5" : "3"}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray={idx % 2 === 0 ? "none" : "5,5"}
+                  style={{
+                    cursor: 'pointer',
+                    opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={() => setHoveredPath(path)}
+                />
+                {shieldPoints.map((p, i) => (
+                  <circle
+                    key={`s-${i}`}
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredPath?.label === path.label ? "5" : "4"}
+                    fill={path.shieldColor}
+                    stroke="rgba(0,0,0,0.5)"
+                    strokeWidth="2"
+                    style={{
+                      cursor: 'pointer',
+                      opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={() => setHoveredPath(path)}
+                  />
+                ))}
+              </g>
+            )
+          } else {
+            // Show total HP as single line
+            const points = path.data.map((d) => ({
+              x: xScale(d.eventIndex),
+              y: yScale(d.totalHp)
+            }))
+
+            const pathData = points.map((p, i) =>
+              i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
+            ).join(' ')
+
+            return (
+              <g key={idx}>
+                {/* Invisible wider path for easier hovering */}
+                <path
+                  d={pathData}
+                  stroke="transparent"
+                  strokeWidth="15"
+                  fill="none"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredPath(path)}
+                  onMouseLeave={() => setHoveredPath(null)}
+                />
+                {/* Visible path */}
+                <path
+                  d={pathData}
+                  stroke={path.color}
+                  strokeWidth={hoveredPath?.label === path.label ? "5" : "3"}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    cursor: 'pointer',
+                    opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={() => setHoveredPath(path)}
+                />
+                {/* Draw points */}
+                {points.map((p, i) => (
+                  <circle
+                    key={i}
+                    cx={p.x}
+                    cy={p.y}
+                    r={hoveredPath?.label === path.label ? "5" : "4"}
+                    fill={path.color}
+                    stroke="rgba(0,0,0,0.5)"
+                    strokeWidth="2"
+                    style={{
+                      cursor: 'pointer',
+                      opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={() => setHoveredPath(path)}
+                  />
+                ))}
+              </g>
+            )
+          }
+        })}
+
+        {/* Tooltip */}
+        {hoveredPath && (
+          <g>
+            <rect
+              x={mousePos.x + 10}
+              y={mousePos.y - 35}
+              width={Math.max(150, hoveredPath.label.length * 7)}
+              height="30"
+              fill="rgba(0, 0, 0, 0.9)"
+              stroke={hoveredPath.color}
+              strokeWidth="2"
+              rx="5"
+            />
+            <text
+              x={mousePos.x + 15}
+              y={mousePos.y - 15}
+              fill={hoveredPath.color}
+              fontSize="14"
+              fontWeight="bold"
+            >
+              {hoveredPath.label}
+            </text>
+          </g>
+        )}
+      </svg>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: '20px', marginTop: '15px', flexWrap: 'wrap' }}>
+        {pathsWithColors.map((path, idx) => {
+          const finalHealth = path.data[path.data.length - 1]?.health || 0
+          const finalShield = path.data[path.data.length - 1]?.shield || 0
+
+          let finalStatus
+          if (finalHealth <= 0) {
+            // Dead - show death info
+            finalStatus = `Died after ${path.totalShotsTaken} shot${path.totalShotsTaken !== 1 ? 's' : ''} at event ${path.deathEventIndex}`
+          } else if (showSeparate) {
+            finalStatus = `${Math.round(finalHealth)} HP / ${Math.round(finalShield)} Shield`
+          } else {
+            finalStatus = `${Math.round(finalHealth)} HP remaining`
+          }
+
+          return (
+            <div
+              key={idx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                opacity: hoveredPath ? (hoveredPath.label === path.label ? 1 : 0.3) : 1,
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={() => setHoveredPath(path)}
+              onMouseLeave={() => setHoveredPath(null)}
+            >
+              {showSeparate ? (
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ width: '20px', height: '3px', background: path.healthColor, border: idx % 2 === 0 ? 'none' : '1px dashed rgba(255,255,255,0.5)' }} />
+                  <div style={{ width: '20px', height: '3px', background: path.shieldColor, border: idx % 2 === 0 ? 'none' : '1px dashed rgba(255,255,255,0.5)' }} />
+                </div>
+              ) : (
+                <div style={{ width: '20px', height: '3px', background: path.color }} />
+              )}
+              <span style={{ color: '#a0a0a0', fontSize: '14px' }}>
+                {path.label} <span style={{ color: finalHealth > 0 ? '#44ff44' : '#ff4444' }}>({finalStatus})</span>
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  const [currentHealth, setCurrentHealth] = useState(100)
+  const [currentShield, setCurrentShield] = useState(
+    SHIELD_TYPES.find(s => s.id === DEFAULTS.shieldType)?.shieldCharge || 0
+  )
+  const [selectedShieldType, setSelectedShieldType] = useState(DEFAULTS.shieldType)
+  const [showSeparateHealthShield, setShowSeparateHealthShield] = useState(false)
+
+  // Event-based timeline
+  const [timeline, setTimeline] = useState([
+    { id: 1, type: 'shot', weaponId: DEFAULTS.weapon, label: 'Shot 1', count: 1 }
+  ])
+  const [nextEventId, setNextEventId] = useState(2)
+  const [expandedMultipliers, setExpandedMultipliers] = useState(new Set())
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [dragOverIndex, setDragOverIndex] = useState(null)
+
+  // Get the last used weapon from timeline (for default in new events)
+  const getLastUsedWeapon = () => {
+    // Search timeline in reverse for the last weapon used
+    for (let i = timeline.length - 1; i >= 0; i--) {
+      const event = timeline[i]
+      if (event.type === 'shot' && event.weaponId) {
+        return event.weaponId
+      }
+      if (event.type === 'split' && event.branches) {
+        for (let j = event.branches.length - 1; j >= 0; j--) {
+          const branch = event.branches[j]
+          if (branch.events) {
+            for (let k = branch.events.length - 1; k >= 0; k--) {
+              if (branch.events[k].type === 'shot' && branch.events[k].weaponId) {
+                return branch.events[k].weaponId
+              }
+            }
+          }
+        }
+      }
+    }
+    return DEFAULTS.weapon
+  }
+
+  // Encode timeline to readable string format with multipliers
+  const encodeTimeline = (events) => {
+    return events.map(event => {
+      if (event.type === 'split') {
+        const branches = event.branches.map(branch => {
+          const count = branch.count || 1
+          let branchStr = ''
+          if (branch.type === 'shot') branchStr = `shot:${branch.weaponId}`
+          else if (branch.type === 'heal') branchStr = `heal:${branch.itemId}`
+          else if (branch.type === 'shield') branchStr = `shield:${branch.itemId}`
+          else branchStr = 'nothing'
+
+          return count > 1 ? `${count}x${branchStr}` : branchStr
+        }).join('|')
+        return `(${branches})`
+      } else {
+        const count = event.count || 1
+        let eventStr = ''
+        if (event.type === 'shot') eventStr = `shot:${event.weaponId}`
+        else if (event.type === 'heal') eventStr = `heal:${event.itemId}`
+        else if (event.type === 'shield') eventStr = `shield:${event.itemId}`
+        else eventStr = 'nothing'
+
+        return count > 1 ? `${count}x${eventStr}` : eventStr
+      }
+    }).join(',')
+  }
+
+  // Decode timeline from readable string format with multipliers
+  const decodeTimeline = (str) => {
+    if (!str) return []
+
+    const events = []
+    let id = 1
+    const parts = []
+    let current = ''
+    let depth = 0
+
+    // Split by comma but respect parentheses
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === '(') depth++
+      if (str[i] === ')') depth--
+      if (str[i] === ',' && depth === 0) {
+        parts.push(current)
+        current = ''
+      } else {
+        current += str[i]
+      }
+    }
+    if (current) parts.push(current)
+
+    const parseEventPart = (part) => {
+      // Check for multiplier (e.g., "5xshot:ferro")
+      const multiplierMatch = part.match(/^(\d+)x(.+)$/)
+      const count = multiplierMatch ? parseInt(multiplierMatch[1]) : 1
+      const eventStr = multiplierMatch ? multiplierMatch[2] : part
+
+      const parsedEvents = []
+
+      if (eventStr.startsWith('(') && eventStr.endsWith(')')) {
+        // Split event
+        const branchStr = eventStr.slice(1, -1)
+        const branchParts = branchStr.split('|')
+        const branches = branchParts.map((b, idx) => {
+          const branchMatch = b.match(/^(\d+)x(.+)$/)
+          const branchCount = branchMatch ? parseInt(branchMatch[1]) : 1
+          const branchEventStr = branchMatch ? branchMatch[2] : b
+
+          id++
+          if (branchEventStr.startsWith('shot:')) return { id, type: 'shot', weaponId: branchEventStr.slice(5), count: branchCount, label: `Option ${String.fromCharCode(65 + idx)}` }
+          if (branchEventStr.startsWith('heal:')) return { id, type: 'heal', itemId: branchEventStr.slice(5), count: branchCount, label: `Option ${String.fromCharCode(65 + idx)}` }
+          if (branchEventStr.startsWith('shield:')) return { id, type: 'shield', itemId: branchEventStr.slice(7), count: branchCount, label: `Option ${String.fromCharCode(65 + idx)}` }
+          return { id, type: 'nothing', count: branchCount, label: `Option ${String.fromCharCode(65 + idx)}` }
+        })
+        parsedEvents.push({ id: id++, type: 'split', label: 'Split', branches })
+      } else {
+        // Regular event with count
+        if (eventStr.startsWith('shot:')) parsedEvents.push({ id: id++, type: 'shot', weaponId: eventStr.slice(5), count, label: `Shot ${id}` })
+        else if (eventStr.startsWith('heal:')) parsedEvents.push({ id: id++, type: 'heal', itemId: eventStr.slice(5), count, label: 'Heal' })
+        else if (eventStr.startsWith('shield:')) parsedEvents.push({ id: id++, type: 'shield', itemId: eventStr.slice(7), count, label: 'Shield Recharge' })
+        else if (eventStr === 'nothing') parsedEvents.push({ id: id++, type: 'nothing', count, label: 'Nothing' })
+      }
+
+      return parsedEvents
+    }
+
+    parts.forEach(part => {
+      events.push(...parseEventPart(part))
+    })
+
+    return { events, nextId: id }
+  }
+
+  // Load state from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const hasAnyParams = params.toString().length > 0
+
+    // If URL has params, load from URL (even if some are missing)
+    // If URL has no params, defaults are already set in useState
+    if (hasAnyParams) {
+      // Load from URL, use defaults only for truly missing values
+      setCurrentHealth(params.has('health') ? parseInt(params.get('health')) || 100 : 100)
+      setCurrentShield(params.has('shield') ? parseInt(params.get('shield')) || 0 : 0)
+
+      // If shieldType param exists (even if empty), use it. If not in URL but other params exist, assume no shield
+      if (params.has('shieldType')) {
+        const shieldType = params.get('shieldType')
+        setSelectedShieldType(shieldType)
+        if (shieldType) {
+          // If there's a shield type but no explicit shield value, set to max
+          if (!params.has('shield')) {
+            const shield = SHIELD_TYPES.find(s => s.id === shieldType)
+            if (shield) setCurrentShield(shield.shieldCharge)
+          }
+        } else {
+          setCurrentShield(0)
+        }
+      } else {
+        // Other params exist but no shieldType = explicitly no shield
+        setSelectedShieldType('')
+        setCurrentShield(0)
+      }
+
+      setShowSeparateHealthShield(params.get('separate') === 'true')
+
+      if (params.has('events')) {
+        try {
+          const decoded = decodeTimeline(params.get('events'))
+          if (decoded.events.length > 0) {
+            setTimeline(decoded.events)
+            setNextEventId(decoded.nextId)
+          }
+        } catch (e) {
+          console.error('Failed to parse events from URL:', e)
+        }
+      } else {
+        // Reset to default timeline if URL has params but no events
+        setTimeline([{ id: 1, type: 'shot', weaponId: DEFAULTS.weapon, label: 'Shot 1', count: 1 }])
+        setNextEventId(2)
+      }
+    }
+  }, [])
+
+  // Update URL when state changes
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    // Encode events first
+    const eventsStr = encodeTimeline(timeline)
+    const defaultShieldCharge = SHIELD_TYPES.find(s => s.id === DEFAULTS.shieldType)?.shieldCharge || 0
+    const hasChanges = currentHealth !== 100 || currentShield !== defaultShieldCharge ||
+                       selectedShieldType !== DEFAULTS.shieldType || showSeparateHealthShield ||
+                       eventsStr !== `shot:${DEFAULTS.weapon}`
+
+    // If anything changed from defaults, save current state to URL
+    if (hasChanges) {
+      if (currentHealth !== 100) params.set('health', currentHealth.toString())
+      // Only save shield if it differs from the default shield charge
+      const currentShieldType = SHIELD_TYPES.find(s => s.id === selectedShieldType)
+      const expectedShieldCharge = currentShieldType?.shieldCharge || 0
+      if (currentShield !== expectedShieldCharge) params.set('shield', currentShield.toString())
+      // Always save shieldType (even if empty) when URL has params, to preserve "no shield" state
+      params.set('shieldType', selectedShieldType)
+      if (showSeparateHealthShield) params.set('separate', 'true')
+      if (eventsStr) params.set('events', eventsStr)
+    }
+
+    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname
+    window.history.replaceState({}, '', newUrl)
+  }, [currentHealth, currentShield, selectedShieldType, showSeparateHealthShield, timeline])
+
+  const calculateShotsToKill = (health, shieldCharge, shieldMitigation, weaponDamage) => {
+    let currentHealth = health
+    let currentShield = shieldCharge
+    let shots = 0
+    let shieldBreakShot = null
+
+    while (currentHealth > 0) {
+      shots++
+
+      if (currentShield > 0) {
+        // Shield is active - mitigate incoming damage to health
+        const mitigatedDamage = weaponDamage * (1 - shieldMitigation / 100)
+        currentHealth -= mitigatedDamage
+
+        // Shield charge is depleted by the full incoming damage
+        currentShield -= weaponDamage
+
+        // Track when shield breaks
+        if (currentShield <= 0 && shieldBreakShot === null) {
+          shieldBreakShot = shots
+        }
+
+        if (currentShield < 0) currentShield = 0
+      } else {
+        // No shield - take full damage
+        currentHealth -= weaponDamage
+      }
+    }
+
+    return { shots, shieldBreakShot }
+  }
+
+  // Simulate health over events in the timeline
+  // Returns all paths through the timeline (handles splits)
+  const simulateHealthOverEvents = (initialHealth, initialShield, shieldMitigation, events) => {
+    // Start with one path
+    let paths = [{
+      health: initialHealth,
+      shield: initialShield,
+      data: [{
+        eventIndex: 0,
+        health: initialHealth,
+        shield: initialShield,
+        totalHp: initialHealth + initialShield,
+        label: 'Start'
+      }],
+      eventHistory: [],
+      totalShotsTaken: 0,
+      deathEventIndex: null
+    }]
+
+    // Process each event
+    events.forEach((event, eventIndex) => {
+      if (event.type === 'split') {
+        // Split creates multiple paths
+        const newPaths = []
+        paths.forEach(path => {
+          event.branches.forEach((branch, branchIndex) => {
+            const newPath = {
+              ...path,
+              data: [...path.data],
+              eventHistory: [...path.eventHistory, branch.label],
+              totalShotsTaken: path.totalShotsTaken,
+              deathEventIndex: path.deathEventIndex
+            }
+            // Apply all events in the branch
+            branch.events.forEach((branchEvent, branchEventIdx) => {
+              processEvent(newPath, branchEvent, eventIndex + branchEventIdx + 1)
+            })
+            newPaths.push(newPath)
+          })
+        })
+        paths = newPaths
+      } else {
+        // Regular event - applies to all paths
+        paths.forEach(path => {
+          processEvent(path, event, eventIndex + 1)
+        })
+      }
+    })
+
+    // Generate labels from event history
+    paths.forEach(path => {
+      path.label = path.eventHistory.length > 0 ? path.eventHistory.join(' > ') : 'No events'
+    })
+
+    return paths
+
+    function processEvent(path, event, eventIndex) {
+      if (path.health <= 0) return // Path is dead
+
+      const count = event.count || 1
+
+      for (let i = 0; i < count; i++) {
+        if (path.health <= 0) break // Stop if dead mid-repetition
+
+        if (event.type === 'shot') {
+          const weapon = WEAPONS.find(w => w.id === event.weaponId) || WEAPONS[0]
+          const weaponDamage = weapon.damage
+
+          // Track shot count
+          path.totalShotsTaken++
+
+          if (path.shield > 0) {
+            const mitigatedDamage = weaponDamage * (1 - shieldMitigation / 100)
+            path.health -= mitigatedDamage
+            path.shield -= weaponDamage
+            if (path.shield < 0) path.shield = 0
+          } else {
+            path.health -= weaponDamage
+          }
+
+          // Track death
+          if (path.health <= 0 && path.deathEventIndex === null) {
+            path.deathEventIndex = eventIndex
+          }
+
+          if (i === 0 || i === count - 1 || count <= 2) { // Only add to history at start/end or if count is small
+            path.eventHistory.push(`shot (${weapon.name})`)
+          } else if (i === 1) {
+            path.eventHistory[path.eventHistory.length - 1] = `${count}xshot (${weapon.name})`
+          }
+        } else if (event.type === 'heal') {
+          const item = HEALING_ITEMS.find(h => h.id === event.itemId)
+          if (item) {
+            path.health = Math.min(path.health + item.healing, 100)
+            if (i === 0) path.eventHistory.push(count > 1 ? `${count}xheal (${item.name})` : `heal (${item.name})`)
+          }
+        } else if (event.type === 'shield') {
+          const item = SHIELD_ITEMS.find(s => s.id === event.itemId)
+          const maxShield = getCurrentShieldType()?.shieldCharge || 200
+          if (item) {
+            path.shield = Math.min(path.shield + item.shieldRestore, maxShield)
+            if (i === 0) path.eventHistory.push(count > 1 ? `${count}xshield (${item.name})` : `shield (${item.name})`)
+          }
+        } else if (event.type === 'nothing') {
+          if (i === 0) path.eventHistory.push(count > 1 ? `${count}xnothing` : 'nothing')
+        }
+
+        if (i === count - 1) { // Only add data point after all repetitions
+          path.data.push({
+            eventIndex: eventIndex,
+            health: Math.max(0, path.health),
+            shield: path.shield,
+            totalHp: Math.max(0, path.health + path.shield),
+            label: event.label || `Event ${eventIndex}`
+          })
+        }
+      }
+    }
+  }
+
+  // Toggle multiplier UI for an event
+  const toggleMultiplier = (eventId) => {
+    setExpandedMultipliers(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId)
+      } else {
+        newSet.add(eventId)
+      }
+      return newSet
+    })
+  }
+
+  // Drag and drop handlers
+  const handleDragStart = (index) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+
+    // Just track where we're hovering, don't update the array yet
+    setDragOverIndex(index)
+  }
+
+  const handleDragEnd = () => {
+    // Only update timeline when drag ends
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      const newTimeline = [...timeline]
+      const draggedItem = newTimeline[draggedIndex]
+
+      // Remove from old position
+      newTimeline.splice(draggedIndex, 1)
+      // Insert at new position
+      newTimeline.splice(dragOverIndex, 0, draggedItem)
+
+      setTimeline(newTimeline)
+    }
+
+    // Clear drag state
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  // Timeline manipulation functions
+  const addEvent = (type) => {
+    const lastWeapon = getLastUsedWeapon()
+    const newEvent = {
+      id: nextEventId,
+      type: type, // 'shot', 'heal', 'shield', 'nothing'
+      weaponId: type === 'shot' ? lastWeapon : undefined,
+      itemId: type === 'heal' ? DEFAULTS.healItem : type === 'shield' ? DEFAULTS.shieldItem : undefined,
+      count: 1,
+      label: type === 'shot' ? `Shot ${nextEventId}` : type === 'heal' ? 'Heal' : type === 'shield' ? 'Shield Recharge' : 'Nothing'
+    }
+    setTimeline([...timeline, newEvent])
+    setNextEventId(nextEventId + 1)
+  }
+
+  const addSplitEvent = (eventIndex) => {
+    const lastWeapon = getLastUsedWeapon()
+    const newTimeline = [...timeline]
+    const splitEvent = {
+      id: nextEventId,
+      type: 'split',
+      label: 'Split',
+      branches: [
+        {
+          id: nextEventId + 1,
+          label: 'Option A',
+          events: [
+            { id: nextEventId + 2, type: 'shot', weaponId: lastWeapon, count: 1 }
+          ]
+        },
+        {
+          id: nextEventId + 3,
+          label: 'Option B',
+          events: [
+            { id: nextEventId + 4, type: 'shot', weaponId: lastWeapon, count: 1 }
+          ]
+        }
+      ]
+    }
+    newTimeline.splice(eventIndex + 1, 0, splitEvent)
+    setTimeline(newTimeline)
+    setNextEventId(nextEventId + 5)
+  }
+
+  const updateEvent = (eventId, updates) => {
+    setTimeline(timeline.map(event => {
+      if (event.id === eventId) {
+        return { ...event, ...updates }
+      }
+      if (event.type === 'split' && event.branches) {
+        return {
+          ...event,
+          branches: event.branches.map(branch =>
+            branch.id === eventId ? { ...branch, ...updates } : branch
+          )
+        }
+      }
+      return event
+    }))
+  }
+
+  const removeEvent = (eventId) => {
+    setTimeline(timeline.filter(event => event.id !== eventId))
+  }
+
+  const addBranchToSplit = (splitEventId) => {
+    const lastWeapon = getLastUsedWeapon()
+    setTimeline(timeline.map(event => {
+      if (event.id === splitEventId && event.type === 'split') {
+        return {
+          ...event,
+          branches: [
+            ...event.branches,
+            {
+              id: nextEventId,
+              label: `Option ${String.fromCharCode(65 + event.branches.length)}`,
+              events: [
+                { id: nextEventId + 1, type: 'shot', weaponId: lastWeapon, count: 1 }
+              ]
+            }
+          ]
+        }
+      }
+      return event
+    }))
+    setNextEventId(nextEventId + 2)
+  }
+
+  const addEventToBranch = (splitEventId, branchId, eventType) => {
+    const lastWeapon = getLastUsedWeapon()
+    setTimeline(timeline.map(event => {
+      if (event.id === splitEventId && event.type === 'split') {
+        return {
+          ...event,
+          branches: event.branches.map(branch => {
+            if (branch.id === branchId) {
+              const newEvent = {
+                id: nextEventId,
+                type: eventType,
+                weaponId: eventType === 'shot' ? lastWeapon : undefined,
+                itemId: eventType === 'heal' ? DEFAULTS.healItem : eventType === 'shield' ? DEFAULTS.shieldItem : undefined,
+                count: 1
+              }
+              return {
+                ...branch,
+                events: [...branch.events, newEvent]
+              }
+            }
+            return branch
+          })
+        }
+      }
+      return event
+    }))
+    setNextEventId(nextEventId + 1)
+  }
+
+  const removeEventFromBranch = (splitEventId, branchId, eventId) => {
+    setTimeline(timeline.map(event => {
+      if (event.id === splitEventId && event.type === 'split') {
+        return {
+          ...event,
+          branches: event.branches.map(branch => {
+            if (branch.id === branchId) {
+              const newEvents = branch.events.filter(e => e.id !== eventId)
+              // Keep at least one event
+              if (newEvents.length === 0) {
+                return branch
+              }
+              return {
+                ...branch,
+                events: newEvents
+              }
+            }
+            return branch
+          })
+        }
+      }
+      return event
+    }))
+  }
+
+  const updateBranchEvent = (splitEventId, branchId, eventId, updates) => {
+    setTimeline(timeline.map(event => {
+      if (event.id === splitEventId && event.type === 'split') {
+        return {
+          ...event,
+          branches: event.branches.map(branch => {
+            if (branch.id === branchId) {
+              return {
+                ...branch,
+                events: branch.events.map(e => e.id === eventId ? { ...e, ...updates } : e)
+              }
+            }
+            return branch
+          })
+        }
+      }
+      return event
+    }))
+  }
+
+  const updateBranch = (splitEventId, branchId, updates) => {
+    setTimeline(timeline.map(event => {
+      if (event.id === splitEventId && event.type === 'split') {
+        return {
+          ...event,
+          branches: event.branches.map(branch =>
+            branch.id === branchId ? { ...branch, ...updates } : branch
+          )
+        }
+      }
+      return event
+    }))
+  }
+
+  const removeBranch = (splitEventId, branchId) => {
+    setTimeline(timeline.map(event => {
+      if (event.id === splitEventId && event.type === 'split') {
+        return {
+          ...event,
+          branches: event.branches.filter(b => b.id !== branchId)
+        }
+      }
+      return event
+    }))
+  }
+
+  const handleShieldTypeChange = (e) => {
+    const shieldTypeId = e.target.value
+    setSelectedShieldType(shieldTypeId)
+
+    if (shieldTypeId) {
+      const shieldType = SHIELD_TYPES.find(s => s.id === shieldTypeId)
+      if (shieldType) {
+        setCurrentShield(shieldType.shieldCharge)
+      }
+    } else {
+      setCurrentShield(0)
+    }
+  }
+
+  const getCurrentShieldType = () => {
+    return SHIELD_TYPES.find(s => s.id === selectedShieldType)
+  }
+
+  const currentShieldMitigation = getCurrentShieldType()?.damageMitigation || 0
+
+  // Reset to defaults
+  const resetToDefaults = () => {
+    // Clear URL first to prevent it from reloading state
+    window.history.replaceState({}, '', window.location.pathname)
+
+    // Reset all state
+    setCurrentHealth(100)
+    setCurrentShield(SHIELD_TYPES.find(s => s.id === DEFAULTS.shieldType)?.shieldCharge || 0)
+    setSelectedShieldType(DEFAULTS.shieldType)
+    setTimeline([{ id: 1, type: 'shot', weaponId: DEFAULTS.weapon, label: 'Shot 1', count: 1 }])
+    setNextEventId(2)
+    setExpandedMultipliers(new Set())
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+    setShowSeparateHealthShield(false)
+  }
+
+  // Simulate all paths through the timeline
+  const paths = simulateHealthOverEvents(currentHealth, currentShield, currentShieldMitigation, timeline)
+
+  return (
+    <div>
+      <h1
+        onClick={resetToDefaults}
+        style={{ cursor: 'pointer' }}
+        title="Click to reset calculator"
+      >
+        Arc Raiders Damage Calculator
+      </h1>
+
+      <div className="calculator">
+        <div className="section">
+          <div className="input-group">
+            <label htmlFor="shieldType">Equipped Shield Type:</label>
+            <select id="shieldType" value={selectedShieldType} onChange={handleShieldTypeChange}>
+              <option value="">No Shield</option>
+              {SHIELD_TYPES.map(shield => (
+                <option key={shield.id} value={shield.id}>
+                  {shield.name} ({shield.shieldCharge} charge, {shield.damageMitigation}% mitigation)
+                </option>
+              ))}
+            </select>
+            {getCurrentShieldType() && (
+              <p style={{ color: '#a0a0a0', fontSize: '14px', marginTop: '5px' }}>
+                {getCurrentShieldType().description}
+              </p>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="health">Current Health: {currentHealth} HP</label>
+            <input
+              id="health"
+              type="range"
+              min="1"
+              max="100"
+              value={currentHealth}
+              onChange={(e) => setCurrentHealth(Number(e.target.value))}
+            />
+            <div className="slider-bar">
+              <div
+                className="slider-bar-fill health-bar"
+                style={{ width: `${currentHealth}%` }}
+              />
+            </div>
+          </div>
+
+          {getCurrentShieldType() && (
+            <div className="input-group">
+              <label htmlFor="shield">
+                Shield Health: {currentShield} / {getCurrentShieldType().shieldCharge}
+              </label>
+              <input
+                id="shield"
+                type="range"
+                min="0"
+                max={getCurrentShieldType().shieldCharge}
+                value={currentShield}
+                onChange={(e) => setCurrentShield(Number(e.target.value))}
+              />
+              <div className="slider-bar">
+                <div
+                  className="slider-bar-fill shield-bar"
+                  style={{ width: `${(currentShield / getCurrentShieldType().shieldCharge) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="section">
+          <h2>Event Timeline</h2>
+          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '10px' }}>
+            {timeline.map((event, index) => (
+              <div
+                key={event.id}
+                onDragOver={(e) => handleDragOver(e, index)}
+                style={{
+                  marginBottom: '15px',
+                  display: 'flex',
+                  gap: '10px',
+                  opacity: draggedIndex === index ? 0.5 : 1,
+                  transform: dragOverIndex === index && draggedIndex !== index ? 'scale(1.02)' : 'scale(1)',
+                  transition: 'opacity 0.2s, transform 0.2s',
+                  outline: dragOverIndex === index && draggedIndex !== index ? '2px solid #00d4ff' : 'none',
+                  borderRadius: '8px'
+                }}
+              >
+                {/* Drag Handle */}
+                <div
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    cursor: 'grab',
+                    padding: '10px 5px',
+                    background: 'rgba(0,212,255,0.2)',
+                    borderRadius: '5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#00d4ff',
+                    fontSize: '16px',
+                    userSelect: 'none',
+                    minWidth: '25px'
+                  }}
+                  title="Drag to reorder"
+                >
+                  ⋮⋮
+                </div>
+                <div style={{ flex: 1 }}>
+                {event.type === 'split' ? (
+                  <div style={{ background: 'rgba(255,170,0,0.2)', padding: '10px', borderRadius: '8px', border: '2px dashed #ffaa00' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <strong style={{ color: '#ffaa00' }}>Split Event</strong>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => addBranchToSplit(event.id)} style={{ fontSize: '12px', padding: '4px 8px' }}>
+                          + Branch
+                        </button>
+                        <button onClick={() => removeEvent(event.id)} style={{ fontSize: '12px', padding: '4px 8px', background: '#ff4444' }}>
+                          Remove Split
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gap: '10px', marginLeft: '20px' }}>
+                      {event.branches.map((branch, branchIdx) => (
+                        <div key={branch.id} style={{ background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '5px', border: '1px solid #888' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                            <input
+                              type="text"
+                              value={branch.label}
+                              onChange={(e) => updateBranch(event.id, branch.id, { label: e.target.value })}
+                              style={{ width: '120px', padding: '6px', fontWeight: 'bold' }}
+                              placeholder="Label"
+                            />
+                            {event.branches.length > 2 && (
+                              <button onClick={() => removeBranch(event.id, branch.id)} style={{ fontSize: '11px', padding: '4px 8px', background: '#ff4444' }}>
+                                Remove Branch
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Events within this branch */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '10px' }}>
+                            {branch.events.map((branchEvent, eventIdx) => (
+                              <div key={branchEvent.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', border: '1px solid #666' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ color: '#888', fontSize: '12px', minWidth: '18px', fontWeight: 'bold' }}>{eventIdx + 1}.</span>
+
+                                  {(branchEvent.count || 1) > 1 && (
+                                    <button
+                                      onClick={() => toggleMultiplier(branchEvent.id)}
+                                      style={{
+                                        padding: '4px 8px',
+                                        fontSize: '11px',
+                                        background: expandedMultipliers.has(branchEvent.id) ? '#00d4ff' : '#555',
+                                        minWidth: '32px'
+                                      }}
+                                    >
+                                      {branchEvent.count}x
+                                    </button>
+                                  )}
+
+                                  <select
+                                    value={branchEvent.type}
+                                    onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, {
+                                      type: e.target.value,
+                                      weaponId: e.target.value === 'shot' ? getLastUsedWeapon() : undefined,
+                                      itemId: e.target.value === 'heal' ? DEFAULTS.healItem : e.target.value === 'shield' ? DEFAULTS.shieldItem : undefined
+                                    })}
+                                    style={{ padding: '5px', width: '80px', fontSize: '12px' }}
+                                  >
+                                    <option value="shot">Shot</option>
+                                    <option value="heal">Heal</option>
+                                    <option value="shield">Shield</option>
+                                    <option value="nothing">Nothing</option>
+                                  </select>
+
+                                  {branchEvent.type === 'shot' && (
+                                    <select
+                                      value={branchEvent.weaponId || getLastUsedWeapon()}
+                                      onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { weaponId: e.target.value })}
+                                      style={{ flex: 1, padding: '5px', fontSize: '12px' }}
+                                    >
+                                      {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
+                                        <option key={weapon.id} value={weapon.id}>
+                                          {weapon.name} ({weapon.damage} dmg)
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+
+                                  {branchEvent.type === 'heal' && (
+                                    <select
+                                      value={branchEvent.itemId || DEFAULTS.healItem}
+                                      onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { itemId: e.target.value })}
+                                      style={{ flex: 1, padding: '5px', fontSize: '12px' }}
+                                    >
+                                      {HEALING_ITEMS.map(item => (
+                                        <option key={item.id} value={item.id}>
+                                          {item.name} (+{item.healing} HP)
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+
+                                  {branchEvent.type === 'shield' && (
+                                    <select
+                                      value={branchEvent.itemId || DEFAULTS.shieldItem}
+                                      onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { itemId: e.target.value })}
+                                      style={{ flex: 1, padding: '5px', fontSize: '12px' }}
+                                    >
+                                      {SHIELD_ITEMS.map(item => (
+                                        <option key={item.id} value={item.id}>
+                                          {item.name} (+{item.shieldRestore})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+
+                                  {(branchEvent.count || 1) === 1 && (
+                                    <button
+                                      onClick={() => {
+                                        updateBranchEvent(event.id, branch.id, branchEvent.id, { count: 2 })
+                                        toggleMultiplier(branchEvent.id)
+                                      }}
+                                      style={{ fontSize: '11px', padding: '5px 8px', background: '#555' }}
+                                    >
+                                      Multiple
+                                    </button>
+                                  )}
+
+                                  {branch.events.length > 1 && (
+                                    <button onClick={() => removeEventFromBranch(event.id, branch.id, branchEvent.id)} style={{ fontSize: '12px', padding: '5px 8px', background: '#ff4444' }}>
+                                      ×
+                                    </button>
+                                  )}
+                                </div>
+
+                                {expandedMultipliers.has(branchEvent.id) && (
+                                  <div style={{ marginTop: '6px', padding: '8px', background: 'rgba(0,212,255,0.1)', borderRadius: '4px' }}>
+                                    <label style={{ display: 'block', color: '#00d4ff', fontSize: '12px', marginBottom: '5px', fontWeight: '600' }}>
+                                      Repeat: {branchEvent.count || 1}x
+                                    </label>
+                                    <input
+                                      type="range"
+                                      min="1"
+                                      max="10"
+                                      value={branchEvent.count || 1}
+                                      onChange={(e) => updateBranchEvent(event.id, branch.id, branchEvent.id, { count: parseInt(e.target.value) })}
+                                      style={{ width: '100%' }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+
+                            {/* Add event buttons */}
+                            <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'shot')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                                + Shot
+                              </button>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'heal')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                                + Heal
+                              </button>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'shield')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                                + Shield
+                              </button>
+                              <button onClick={() => addEventToBranch(event.id, branch.id, 'nothing')} style={{ flex: 1, fontSize: '12px', padding: '8px 4px' }}>
+                                + Nothing
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(0,212,255,0.1)', borderRadius: '8px', border: '1px solid #00d4ff' }}>
+                      <span style={{ color: '#00d4ff', minWidth: '80px' }}>Event {index + 1}:</span>
+                      {(event.count || 1) > 1 && (
+                        <button
+                          onClick={() => toggleMultiplier(event.id)}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            background: expandedMultipliers.has(event.id) ? '#00d4ff' : '#555',
+                            minWidth: '45px'
+                          }}
+                          title="Toggle multiplier"
+                        >
+                          {event.count}x
+                        </button>
+                      )}
+                    <select
+                      value={event.type}
+                      onChange={(e) => updateEvent(event.id, {
+                        type: e.target.value,
+                        weaponId: e.target.value === 'shot' ? getLastUsedWeapon() : undefined,
+                        itemId: e.target.value === 'heal' ? DEFAULTS.healItem : e.target.value === 'shield' ? DEFAULTS.shieldItem : undefined
+                      })}
+                      style={{ padding: '6px', width: '80px' }}
+                    >
+                      <option value="shot">Shot</option>
+                      <option value="heal">Heal</option>
+                      <option value="shield">Shield</option>
+                      <option value="nothing">Nothing</option>
+                    </select>
+                    {event.type === 'shot' && (
+                      <select
+                        value={event.weaponId || getLastUsedWeapon()}
+                        onChange={(e) => updateEvent(event.id, { weaponId: e.target.value })}
+                        style={{ flex: 1, padding: '6px' }}
+                      >
+                        {WEAPONS.sort((a, b) => b.damage - a.damage).map(weapon => (
+                          <option key={weapon.id} value={weapon.id}>
+                            {weapon.name} ({weapon.damage} dmg)
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {event.type === 'heal' && (
+                      <select
+                        value={event.itemId || DEFAULTS.healItem}
+                        onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
+                        style={{ flex: 1, padding: '6px' }}
+                      >
+                        {HEALING_ITEMS.map(item => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} (+{item.healing} HP)
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {event.type === 'shield' && (
+                      <select
+                        value={event.itemId || DEFAULTS.shieldItem}
+                        onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
+                        style={{ flex: 1, padding: '6px' }}
+                      >
+                        {SHIELD_ITEMS.map(item => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} (+{item.shieldRestore})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {(event.count || 1) === 1 && (
+                      <button
+                        onClick={() => {
+                          updateEvent(event.id, { count: 2 })
+                          toggleMultiplier(event.id)
+                        }}
+                        style={{ fontSize: '12px', padding: '6px 12px', background: '#555' }}
+                        title="Add multiplier"
+                      >
+                        Multiple
+                      </button>
+                    )}
+                    <button onClick={() => addSplitEvent(index)} style={{ fontSize: '12px', padding: '6px 12px', background: '#ffaa00' }}>
+                      Split Here
+                    </button>
+                    <button onClick={() => removeEvent(event.id)} style={{ fontSize: '12px', padding: '6px 12px', background: '#ff4444' }}>
+                      Remove
+                    </button>
+                  </div>
+                  {expandedMultipliers.has(event.id) && (
+                    <div style={{ marginTop: '10px', padding: '15px', background: 'rgba(0,212,255,0.15)', borderRadius: '8px', border: '1px solid #00d4ff' }}>
+                      <label style={{ display: 'block', color: '#00d4ff', fontSize: '14px', marginBottom: '8px' }}>
+                        Repeat: {event.count || 1}x
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={event.count || 1}
+                        onChange={(e) => updateEvent(event.id, { count: parseInt(e.target.value) })}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                  )}
+                  </div>
+                )}
+                </div>
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+              <button onClick={() => addEvent('shot')} style={{ flex: 1, padding: '10px' }}>
+                + Shot
+              </button>
+              <button onClick={() => addEvent('heal')} style={{ flex: 1, padding: '10px' }}>
+                + Heal
+              </button>
+              <button onClick={() => addEvent('shield')} style={{ flex: 1, padding: '10px' }}>
+                + Shield
+              </button>
+              <button onClick={() => addEvent('nothing')} style={{ flex: 1, padding: '10px' }}>
+                + Nothing
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="results">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#00d4ff' }}>
+              <input
+                type="checkbox"
+                checked={showSeparateHealthShield}
+                onChange={(e) => setShowSeparateHealthShield(e.target.checked)}
+              />
+              Show Health and Shield Separately
+            </label>
+          </div>
+          <HealthOverEventsGraph paths={paths} showSeparate={showSeparateHealthShield} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default App
