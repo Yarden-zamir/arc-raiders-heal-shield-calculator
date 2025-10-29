@@ -32,47 +32,30 @@
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: var(--color-bg-dark);
+  background: 
+    linear-gradient(135deg, 
+      #60ffff 0px,
+      #60ffff 80px,
+      #1a0f20 80px,
+      #1a0f20 120px,
+      #0bfe78 120px,
+      #0bfe78 200px,
+      #1a0f20 200px,
+      #1a0f20 240px,
+      #eccb0d 240px,
+      #eccb0d 320px,
+      #1a0f20 320px,
+      #1a0f20 360px,
+      #fc0003 360px,
+      #fc0003 440px,
+      var(--color-bg-dark) 440px
+    );
   color: var(--color-text);
   min-height: 100vh;
   padding: 0rem;
   font-size: 16px;
   line-height: 1.4;
-  position: relative;
   overflow-x: hidden;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200%;
-  height: 100%;
-  background: 
-    linear-gradient(135deg, 
-      transparent 0%,
-      transparent calc(0% + 0px),
-      #60ffff calc(0% + 0px),
-      #60ffff calc(0% + 80px),
-      #1a1015 calc(0% + 80px),
-      #1a1015 calc(0% + 120px),
-      #0bfe78 calc(0% + 120px),
-      #0bfe78 calc(0% + 200px),
-      #1a1015 calc(0% + 200px),
-      #1a1015 calc(0% + 240px),
-      #eccb0d calc(0% + 240px),
-      #eccb0d calc(0% + 320px),
-      #1a1015 calc(0% + 320px),
-      #1a1015 calc(0% + 360px),
-      #fc0003 calc(0% + 360px),
-      #fc0003 calc(0% + 440px),
-      transparent calc(0% + 440px)
-    );
-  opacity: 0.15;
-  pointer-events: none;
-  z-index: 0;
-  transform: translateX(-50%);
 }
 
 #root {
@@ -113,26 +96,27 @@ h2 {
 
 /* Main calculator container */
 .calculator {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(18, 10, 23, 0.95);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   padding: 0.25rem;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(96, 255, 255, 0.3);
 }
 
 .section {
   margin-bottom: 0.75rem;
-  background: rgba(96, 255, 255, 0.05);
+  background: rgba(26, 15, 32, 0.9);
   padding: 0.625rem;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(96, 255, 255, 0.2);
+  border: 2px solid rgba(96, 255, 255, 0.3);
   transition: all 0.3s ease;
 }
 
 .section:hover {
-  background: rgba(96, 255, 255, 0.08);
-  border-color: rgba(96, 255, 255, 0.3);
+  background: rgba(26, 15, 32, 0.95);
+  border-color: rgba(96, 255, 255, 0.5);
+  box-shadow: 0 0 20px rgba(96, 255, 255, 0.2);
 }
 
 /* Form elements - Mobile optimized */
@@ -155,8 +139,8 @@ input[type="number"],
 input[type="text"] {
   width: 100%;
   padding: 0.625rem;
-  background: rgba(237, 226, 209, 0.08);
-  border: 2px solid rgba(96, 255, 255, 0.3);
+  background: rgba(18, 10, 23, 0.9);
+  border: 2px solid rgba(96, 255, 255, 0.4);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   font-size: 0.875rem;
@@ -171,13 +155,13 @@ input[type="number"]:focus,
 input[type="text"]:focus {
   outline: none;
   border-color: var(--color-neon-cyan);
-  background: rgba(237, 226, 209, 0.12);
-  box-shadow: 0 0 15px rgba(96, 255, 255, 0.4);
+  background: rgba(18, 10, 23, 0.95);
+  box-shadow: 0 0 15px rgba(96, 255, 255, 0.5);
 }
 
 select:hover {
   border-color: var(--color-neon-cyan);
-  background: rgba(237, 226, 209, 0.12);
+  background: rgba(18, 10, 23, 0.95);
 }
 
 select option {
@@ -232,8 +216,8 @@ select option {
 .custom-image-select-trigger {
   width: 100%;
   padding: 0.625rem;
-  background: rgba(237, 226, 209, 0.08);
-  border: 2px solid rgba(96, 255, 255, 0.3);
+  background: rgba(18, 10, 23, 0.9);
+  border: 2px solid rgba(96, 255, 255, 0.4);
   border-radius: var(--radius-sm);
   color: var(--color-text);
   font-size: 0.875rem;
@@ -247,7 +231,8 @@ select option {
 
 .custom-image-select-trigger:hover {
   border-color: var(--color-neon-cyan);
-  background: rgba(237, 226, 209, 0.12);
+  background: rgba(18, 10, 23, 0.95);
+  box-shadow: 0 0 10px rgba(96, 255, 255, 0.3);
 }
 
 .custom-select-selected {
@@ -284,13 +269,13 @@ select option {
   left: 0;
   right: 0;
   margin-top: 0.25rem;
-  background: var(--color-bg-dark);
-  border: 2px solid rgba(96, 255, 255, 0.3);
+  background: rgba(18, 10, 23, 0.98);
+  border: 2px solid rgba(96, 255, 255, 0.5);
   border-radius: var(--radius-sm);
   max-height: 300px;
   overflow-y: auto;
   z-index: 10000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(96, 255, 255, 0.3);
 }
 
 .custom-select-option {
@@ -578,9 +563,10 @@ input[type="checkbox"] {
 
 /* Timeline event styles */
 .timeline-container {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(18, 10, 23, 0.85);
   padding: 0.5rem;
   border-radius: var(--radius-md);
+  border: 1px solid rgba(96, 255, 255, 0.2);
 }
 
 .timeline-event {
@@ -615,8 +601,8 @@ input[type="checkbox"] {
 
 .event-card {
   flex: 1;
-  background: rgba(96, 255, 255, 0.1);
-  border: 1px solid rgba(96, 255, 255, 0.3);
+  background: rgba(18, 10, 23, 0.9);
+  border: 2px solid rgba(96, 255, 255, 0.4);
   border-radius: var(--radius-sm);
   padding: 0.5rem;
 }
@@ -706,10 +692,11 @@ input[type="checkbox"] {
 
 /* Graph container */
 .graph-container {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(18, 10, 23, 0.85);
   padding: 0.5rem;
   border-radius: var(--radius-md);
   margin-top: 0.75rem;
+  border: 1px solid rgba(96, 255, 255, 0.2);
 }
 
 .graph-wrapper {
