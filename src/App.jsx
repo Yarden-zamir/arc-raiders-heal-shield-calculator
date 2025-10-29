@@ -33,6 +33,7 @@ const SHIELD_ITEMS = [
 ]
 
 // Shield types that can be equipped (data from Arc Raiders wiki)
+// Source: https://arcraiders.wiki/wiki/Shields
 const SHIELD_TYPES = [
   {
     id: 'light_shield',
@@ -40,7 +41,8 @@ const SHIELD_TYPES = [
     shieldCharge: 40,
     damageMitigation: 40,
     movementSpeedModifier: 0,
-    description: 'Low protection, no mobility penalty'
+    description: 'Low protection, no mobility penalty',
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Light_Shield.png'
   },
   {
     id: 'medium_shield',
@@ -48,7 +50,8 @@ const SHIELD_TYPES = [
     shieldCharge: 70,
     damageMitigation: 42.5,
     movementSpeedModifier: -5,
-    description: 'Balanced protection, 5% speed reduction'
+    description: 'Balanced protection, 5% speed reduction',
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Medium_Shield.png'
   },
   {
     id: 'heavy_shield',
@@ -56,7 +59,8 @@ const SHIELD_TYPES = [
     shieldCharge: 80,
     damageMitigation: 52.5,
     movementSpeedModifier: -15,
-    description: 'Maximum protection, 15% speed reduction'
+    description: 'Maximum protection, 15% speed reduction',
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Heavy_Shield.png'
   }
 ]
 
@@ -485,6 +489,8 @@ function App() {
   )
   const [selectedShieldType, setSelectedShieldType] = useState(DEFAULTS.shieldType)
   const [showSeparateHealthShield, setShowSeparateHealthShield] = useState(false)
+  const [isDraggingHealth, setIsDraggingHealth] = useState(false)
+  const [isDraggingShield, setIsDraggingShield] = useState(false)
 
   // Event-based timeline
   const [timeline, setTimeline] = useState([
@@ -1096,6 +1102,38 @@ function App() {
 
   const currentShieldMitigation = getCurrentShieldType()?.damageMitigation || 0
 
+  // Handle dragging for health bar
+  const handleHealthDrag = (e) => {
+    if (!isDraggingHealth) return
+    const bar = e.currentTarget
+    const rect = bar.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const barWidth = rect.width
+    const percentage = Math.max(1, Math.min(100, Math.round((clickX / barWidth) * 100)))
+    setCurrentHealth(percentage)
+  }
+
+  const handleShieldDrag = (e) => {
+    if (!isDraggingShield) return
+    const bar = e.currentTarget
+    const rect = bar.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const barWidth = rect.width
+    const maxShield = getCurrentShieldType().shieldCharge
+    const value = Math.max(0, Math.min(maxShield, Math.round((clickX / barWidth) * maxShield)))
+    setCurrentShield(value)
+  }
+
+  // Stop dragging on mouse up
+  useEffect(() => {
+    const handleMouseUp = () => {
+      setIsDraggingHealth(false)
+      setIsDraggingShield(false)
+    }
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => window.removeEventListener('mouseup', handleMouseUp)
+  }, [])
+
   // Reset to defaults
   const resetToDefaults = () => {
     // Clear URL first to prevent it from reloading state
@@ -1145,38 +1183,28 @@ function App() {
             )}
           </div>
 
-          <div className="input-group">
-            <label htmlFor="health">Current Health: {currentHealth} HP</label>
-            <input
-              id="health"
-              type="range"
-              min="1"
-              max="100"
-              value={currentHealth}
-              onChange={(e) => setCurrentHealth(Number(e.target.value))}
-            />
-            <div className="slider-bar">
-              <div
-                className="slider-bar-fill health-bar"
-                style={{ width: `${currentHealth}%` }}
-              />
-            </div>
-          </div>
-
           {getCurrentShieldType() && (
             <div className="input-group">
               <label htmlFor="shield">
                 Shield Health: {currentShield} / {getCurrentShieldType().shieldCharge}
               </label>
-              <input
-                id="shield"
-                type="range"
-                min="0"
-                max={getCurrentShieldType().shieldCharge}
-                value={currentShield}
-                onChange={(e) => setCurrentShield(Number(e.target.value))}
-              />
-              <div className="slider-bar">
+              <div 
+                className="slider-bar clickable"
+                onMouseDown={(e) => {
+                  setIsDraggingShield(true)
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const clickX = e.clientX - rect.left
+                  const barWidth = rect.width
+                  const maxShield = getCurrentShieldType().shieldCharge
+                  const value = Math.max(0, Math.min(maxShield, Math.round((clickX / barWidth) * maxShield)))
+                  setCurrentShield(value)
+                }}
+                onMouseMove={handleShieldDrag}
+                onMouseUp={() => setIsDraggingShield(false)}
+                onMouseLeave={() => setIsDraggingShield(false)}
+                style={{ cursor: isDraggingShield ? 'grabbing' : 'pointer' }}
+                title="Click or drag to set shield"
+              >
                 <div
                   className="slider-bar-fill shield-bar"
                   style={{ width: `${(currentShield / getCurrentShieldType().shieldCharge) * 100}%` }}
@@ -1184,6 +1212,31 @@ function App() {
               </div>
             </div>
           )}
+
+          <div className="input-group">
+            <label htmlFor="health">Current Health: {currentHealth} HP</label>
+            <div 
+              className="slider-bar clickable no-segments"
+              onMouseDown={(e) => {
+                setIsDraggingHealth(true)
+                const rect = e.currentTarget.getBoundingClientRect()
+                const clickX = e.clientX - rect.left
+                const barWidth = rect.width
+                const percentage = Math.max(1, Math.min(100, Math.round((clickX / barWidth) * 100)))
+                setCurrentHealth(percentage)
+              }}
+              onMouseMove={handleHealthDrag}
+              onMouseUp={() => setIsDraggingHealth(false)}
+              onMouseLeave={() => setIsDraggingHealth(false)}
+              style={{ cursor: isDraggingHealth ? 'grabbing' : 'pointer' }}
+              title="Click or drag to set health"
+            >
+              <div
+                className="slider-bar-fill health-bar"
+                style={{ width: `${currentHealth}%` }}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="section">

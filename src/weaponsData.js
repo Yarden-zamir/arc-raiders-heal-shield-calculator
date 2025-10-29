@@ -10,7 +10,8 @@ export const WEAPONS = [
     damage: 10,
     fireMode: 'Single',
     ammoType: 'Light Ammo',
-    range: 42.8
+    range: 42.8,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Kettle.png'
   },
   {
     id: 'rattler',
@@ -19,7 +20,8 @@ export const WEAPONS = [
     damage: 9,
     fireMode: 'Auto',
     ammoType: 'Medium Ammo',
-    range: 56.2
+    range: 56.2,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Rattler.png'
   },
   {
     id: 'arpeggio',
@@ -28,7 +30,8 @@ export const WEAPONS = [
     damage: 9.5,
     fireMode: 'Burst',
     ammoType: 'Medium Ammo',
-    range: 55.9
+    range: 55.9,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Arpeggio.png'
   },
   {
     id: 'tempest',
@@ -37,7 +40,8 @@ export const WEAPONS = [
     damage: 10,
     fireMode: 'Auto',
     ammoType: 'Medium Ammo',
-    range: 55.9
+    range: 55.9,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Tempest.png'
   },
   {
     id: 'bettina',
@@ -46,7 +50,8 @@ export const WEAPONS = [
     damage: 14,
     fireMode: 'Auto',
     ammoType: 'Heavy Ammo',
-    range: 51.3
+    range: 51.3,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bettina.png'
   },
 
   // Battle Rifles
@@ -57,7 +62,8 @@ export const WEAPONS = [
     damage: 40,
     fireMode: 'Single',
     ammoType: 'Heavy Ammo',
-    range: 53.1
+    range: 53.1,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Ferro.png'
   },
   {
     id: 'renegade',
@@ -66,7 +72,8 @@ export const WEAPONS = [
     damage: 35,
     fireMode: 'Single',
     ammoType: 'Medium Ammo',
-    range: 68.8
+    range: 68.8,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Renegade.png'
   },
 
   // Submachine Guns
@@ -77,7 +84,8 @@ export const WEAPONS = [
     damage: 7,
     fireMode: 'Auto',
     ammoType: 'Light Ammo',
-    range: 42.1
+    range: 42.1,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Stitcher.png'
   },
   {
     id: 'bobcat',
@@ -86,7 +94,8 @@ export const WEAPONS = [
     damage: 6,
     fireMode: 'Auto',
     ammoType: 'Light Ammo',
-    range: 44
+    range: 44,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bobcat.png'
   },
 
   // Shotguns
@@ -97,7 +106,8 @@ export const WEAPONS = [
     damage: 67.5,
     fireMode: 'Single',
     ammoType: 'Shotgun Ammo',
-    range: 20
+    range: 20,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Il_Toro.png'
   },
   {
     id: 'vulcano',
@@ -106,7 +116,8 @@ export const WEAPONS = [
     damage: 49.5,
     fireMode: 'Single',
     ammoType: 'Shotgun Ammo',
-    range: 26
+    range: 26,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Vulcano.png'
   },
 
   // Pistols
@@ -117,7 +128,8 @@ export const WEAPONS = [
     damage: 20,
     fireMode: 'Single',
     ammoType: 'Light Ammo',
-    range: 38.6
+    range: 38.6,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Hairpin.png'
   },
   {
     id: 'burletta',
@@ -126,7 +138,8 @@ export const WEAPONS = [
     damage: 10,
     fireMode: 'Single',
     ammoType: 'Light Ammo',
-    range: 41.7
+    range: 41.7,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Burletta.png'
   },
   {
     id: 'anvil',
@@ -135,7 +148,8 @@ export const WEAPONS = [
     damage: 40,
     fireMode: 'Single',
     ammoType: 'Heavy Ammo',
-    range: 50.2
+    range: 50.2,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Anvil.png'
   },
   {
     id: 'venator',
@@ -144,7 +158,8 @@ export const WEAPONS = [
     damage: 18,
     fireMode: 'Single',
     ammoType: 'Medium Ammo',
-    range: 48.4
+    range: 48.4,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Venator.png'
   },
 
   // Light Machine Guns
@@ -155,7 +170,8 @@ export const WEAPONS = [
     damage: 8,
     fireMode: 'Auto',
     ammoType: 'Medium Ammo',
-    range: 49.9
+    range: 49.9,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Torrente.png'
   },
 
   // Sniper Rifles
@@ -166,7 +182,8 @@ export const WEAPONS = [
     damage: 45,
     fireMode: 'Single',
     ammoType: 'Medium Ammo',
-    range: 80.3
+    range: 80.3,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Osprey.png'
   },
   {
     id: 'jupiter',
@@ -175,7 +192,8 @@ export const WEAPONS = [
     damage: 55,
     fireMode: 'Single',
     ammoType: 'Energy Clip',
-    range: 71.7
+    range: 71.7,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Jupiter.png'
   },
 
   // Special
@@ -186,7 +204,8 @@ export const WEAPONS = [
     damage: 8,
     fireMode: 'Auto',
     ammoType: 'Energy Clip',
-    range: 68.6
+    range: 68.6,
+    image: 'https://arcraiders.wiki/wiki/Special:FilePath/Equalizer.png'
   }
 ]
 
