@@ -10,26 +10,28 @@ const DEFAULTS = {
 }
 
 // Healing items with data from Arc Raiders wiki
+// Source: https://arcraiders.wiki/wiki/Healing
 const HEALING_ITEMS = [
-  { id: 'vita_shot', name: 'Vita Shot', healing: 50, type: 'instant' },
-  { id: 'sterilized_bandage', name: 'Sterilized Bandage', healing: 50, type: 'over_time' },
-  { id: 'herbal_bandage', name: 'Herbal Bandage', healing: 35, type: 'over_time' },
-  { id: 'fruit_mix', name: 'Fruit Mix', healing: 25, type: 'instant' },
-  { id: 'bandage', name: 'Bandage', healing: 20, type: 'over_time' },
-  { id: 'vita_spray', name: 'Vita Spray', healing: 15, type: 'continuous' },
-  { id: 'expired_pasta', name: 'Expired Pasta', healing: 15, type: 'instant' },
-  { id: 'mushroom', name: 'Mushroom', healing: 15, type: 'instant' },
-  { id: 'agave', name: 'Agave', healing: 10, type: 'over_time' },
-  { id: 'fabric', name: 'Fabric', healing: 10, type: 'over_time' },
-  { id: 'moss', name: 'Moss', healing: 10, type: 'over_time' },
-  { id: 'resin', name: 'Resin', healing: 10, type: 'over_time' }
+  { id: 'vita_shot', name: 'Vita Shot', healing: 50, type: 'instant', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Vita_Shot.png' },
+  { id: 'sterilized_bandage', name: 'Sterilized Bandage', healing: 50, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Sterilized_Bandage.png' },
+  { id: 'herbal_bandage', name: 'Herbal Bandage', healing: 35, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Herbal_Bandage.png' },
+  { id: 'fruit_mix', name: 'Fruit Mix', healing: 25, type: 'instant', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Fruit_Mix.png' },
+  { id: 'bandage', name: 'Bandage', healing: 20, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Bandage.png' },
+  { id: 'vita_spray', name: 'Vita Spray', healing: 15, type: 'continuous', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Vita_Spray.png' },
+  { id: 'expired_pasta', name: 'Expired Pasta', healing: 15, type: 'instant', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Expired_Pasta.png' },
+  { id: 'mushroom', name: 'Mushroom', healing: 15, type: 'instant', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Mushroom.png' },
+  { id: 'agave', name: 'Agave', healing: 10, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Agave.png' },
+  { id: 'fabric', name: 'Fabric', healing: 10, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Fabric.png' },
+  { id: 'moss', name: 'Moss', healing: 10, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Moss.png' },
+  { id: 'resin', name: 'Resin', healing: 10, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Resin.png' }
 ]
 
 // Shield recharge items from Arc Raiders wiki
+// Source: https://arcraiders.wiki/wiki/Healing
 const SHIELD_ITEMS = [
-  { id: 'surge_shield_recharger', name: 'Surge Shield Recharger', shieldRestore: 50, type: 'instant' },
-  { id: 'shield_recharger', name: 'Shield Recharger', shieldRestore: 40, type: 'over_time' },
-  { id: 'arc_powercell', name: 'ARC Powercell', shieldRestore: 20, type: 'over_time' }
+  { id: 'surge_shield_recharger', name: 'Surge Shield Recharger', shieldRestore: 50, type: 'instant', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Surge_Shield_Recharger.png' },
+  { id: 'shield_recharger', name: 'Shield Recharger', shieldRestore: 40, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/Shield_Recharger.png' },
+  { id: 'arc_powercell', name: 'ARC Powercell', shieldRestore: 20, type: 'over_time', image: 'https://arcraiders.wiki/wiki/Special:FilePath/ARC_Powercell.png' }
 ]
 
 // Shield types that can be equipped (data from Arc Raiders wiki)
@@ -1559,32 +1561,30 @@ function App() {
                     )}
                     {event.type === 'heal' && (
                       <div className="event-row">
-                        <select
+                        <ImageSelect
                           value={event.itemId || DEFAULTS.healItem}
                           onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
-                          style={{ width: '100%' }}
-                        >
-                          {HEALING_ITEMS.map(item => (
-                            <option key={item.id} value={item.id}>
-                              {item.name} (+{item.healing} HP)
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Select healing item..."
+                          options={HEALING_ITEMS.map(item => ({
+                            value: item.id,
+                            label: `${item.name} (+${item.healing} HP)`,
+                            image: item.image
+                          }))}
+                        />
                       </div>
                     )}
                     {event.type === 'shield' && (
                       <div className="event-row">
-                        <select
+                        <ImageSelect
                           value={event.itemId || DEFAULTS.shieldItem}
                           onChange={(e) => updateEvent(event.id, { itemId: e.target.value })}
-                          style={{ width: '100%' }}
-                        >
-                          {SHIELD_ITEMS.map(item => (
-                            <option key={item.id} value={item.id}>
-                              {item.name} (+{item.shieldRestore})
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="Select shield item..."
+                          options={SHIELD_ITEMS.map(item => ({
+                            value: item.id,
+                            label: `${item.name} (+${item.shieldRestore})`,
+                            image: item.image
+                          }))}
+                        />
                       </div>
                     )}
 
