@@ -1164,12 +1164,20 @@ function App() {
 
   const currentShieldMitigation = getCurrentShieldType()?.damageMitigation || 0
 
+  // Helper to get clientX from mouse or touch event
+  const getClientX = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      return e.touches[0].clientX
+    }
+    return e.clientX
+  }
+
   // Handle dragging for health bar
   const handleHealthDrag = (e) => {
     if (!isDraggingHealth) return
     const bar = e.currentTarget
     const rect = bar.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
+    const clickX = getClientX(e) - rect.left
     const barWidth = rect.width
     const percentage = Math.max(1, Math.min(100, Math.round((clickX / barWidth) * 100)))
     setCurrentHealth(percentage)
@@ -1179,21 +1187,52 @@ function App() {
     if (!isDraggingShield) return
     const bar = e.currentTarget
     const rect = bar.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
+    const clickX = getClientX(e) - rect.left
     const barWidth = rect.width
     const maxShield = getCurrentShieldType().shieldCharge
     const value = Math.max(0, Math.min(maxShield, Math.round((clickX / barWidth) * maxShield)))
     setCurrentShield(value)
   }
 
-  // Stop dragging on mouse up
+  // Handle initial click/touch for health bar
+  const handleHealthStart = (e) => {
+    const bar = e.currentTarget
+    setIsDraggingHealth(true)
+    const rect = bar.getBoundingClientRect()
+    const clickX = getClientX(e) - rect.left
+    const barWidth = rect.width
+    const percentage = Math.max(1, Math.min(100, Math.round((clickX / barWidth) * 100)))
+    setCurrentHealth(percentage)
+    e.preventDefault()
+  }
+
+  // Handle initial click/touch for shield bar
+  const handleShieldStart = (e) => {
+    const bar = e.currentTarget
+    setIsDraggingShield(true)
+    const rect = bar.getBoundingClientRect()
+    const clickX = getClientX(e) - rect.left
+    const barWidth = rect.width
+    const maxShield = getCurrentShieldType().shieldCharge
+    const value = Math.max(0, Math.min(maxShield, Math.round((clickX / barWidth) * maxShield)))
+    setCurrentShield(value)
+    e.preventDefault()
+  }
+
+  // Stop dragging on mouse/touch up
   useEffect(() => {
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       setIsDraggingHealth(false)
       setIsDraggingShield(false)
     }
-    window.addEventListener('mouseup', handleMouseUp)
-    return () => window.removeEventListener('mouseup', handleMouseUp)
+    window.addEventListener('mouseup', handleEnd)
+    window.addEventListener('touchend', handleEnd)
+    window.addEventListener('touchcancel', handleEnd)
+    return () => {
+      window.removeEventListener('mouseup', handleEnd)
+      window.removeEventListener('touchend', handleEnd)
+      window.removeEventListener('touchcancel', handleEnd)
+    }
   }, [])
 
   // Reset to defaults
@@ -1257,19 +1296,14 @@ function App() {
               </label>
               <div 
                 className="slider-bar clickable"
-                onMouseDown={(e) => {
-                  setIsDraggingShield(true)
-                  const rect = e.currentTarget.getBoundingClientRect()
-                  const clickX = e.clientX - rect.left
-                  const barWidth = rect.width
-                  const maxShield = getCurrentShieldType().shieldCharge
-                  const value = Math.max(0, Math.min(maxShield, Math.round((clickX / barWidth) * maxShield)))
-                  setCurrentShield(value)
-                }}
+                onMouseDown={handleShieldStart}
+                onTouchStart={handleShieldStart}
                 onMouseMove={handleShieldDrag}
+                onTouchMove={handleShieldDrag}
                 onMouseUp={() => setIsDraggingShield(false)}
+                onTouchEnd={() => setIsDraggingShield(false)}
                 onMouseLeave={() => setIsDraggingShield(false)}
-                style={{ cursor: isDraggingShield ? 'grabbing' : 'pointer' }}
+                style={{ cursor: isDraggingShield ? 'grabbing' : 'pointer', touchAction: 'none' }}
                 title="Click or drag to set shield"
               >
                 <div
@@ -1284,18 +1318,14 @@ function App() {
             <label htmlFor="health">Current Health: {currentHealth} HP</label>
             <div 
               className="slider-bar clickable no-segments"
-              onMouseDown={(e) => {
-                setIsDraggingHealth(true)
-                const rect = e.currentTarget.getBoundingClientRect()
-                const clickX = e.clientX - rect.left
-                const barWidth = rect.width
-                const percentage = Math.max(1, Math.min(100, Math.round((clickX / barWidth) * 100)))
-                setCurrentHealth(percentage)
-              }}
+              onMouseDown={handleHealthStart}
+              onTouchStart={handleHealthStart}
               onMouseMove={handleHealthDrag}
+              onTouchMove={handleHealthDrag}
               onMouseUp={() => setIsDraggingHealth(false)}
+              onTouchEnd={() => setIsDraggingHealth(false)}
               onMouseLeave={() => setIsDraggingHealth(false)}
-              style={{ cursor: isDraggingHealth ? 'grabbing' : 'pointer' }}
+              style={{ cursor: isDraggingHealth ? 'grabbing' : 'pointer', touchAction: 'none' }}
               title="Click or drag to set health"
             >
               <div
@@ -1631,49 +1661,6 @@ function App() {
                 </div>
               </div>
             ))}
-            {/* Add Event Buttons - Positioned after all events to avoid overlay issues */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '0.375rem', 
-              marginTop: '0.75rem',
-              justifyContent: 'center',
-              position: 'relative',
-              zIndex: 1
-            }}>
-              <button 
-                onClick={() => addEvent('shot')}
-                style={{ 
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.6875rem',
-                  minHeight: 'auto',
-                  minWidth: '70px'
-                }}
-              >
-                + Shot
-              </button>
-              <button 
-                onClick={() => addEvent('heal')}
-                style={{ 
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.6875rem',
-                  minHeight: 'auto',
-                  minWidth: '70px'
-                }}
-              >
-                + Heal
-              </button>
-              <button 
-                onClick={() => addEvent('shield')}
-                style={{ 
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.6875rem',
-                  minHeight: 'auto',
-                  minWidth: '70px'
-                }}
-              >
-                + Shield
-              </button>
-            </div>
           </div>
         </div>
 
